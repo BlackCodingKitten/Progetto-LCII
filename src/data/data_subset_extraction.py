@@ -7,6 +7,41 @@ import random
 random.seed(42)
 csv.field_size_limit(sys.maxsize)
 
+def validation_subset(filename, row) -> list:
+    subset = []
+    c0 = 0
+    c1 = 0
+
+    with open(filename, mode="r", encoding="utf-8", newline="") as file:
+        reader = csv.DictReader(file)
+
+        # Leggo tutte le righe e poi parto dall'ultima
+        righe = list(reader)
+
+        for riga in reversed(righe):
+            if c0+c1 < row:
+                if c0==c1: 
+                    match riga["label"]: 
+                        case"1":
+                            c1+=1
+                        case "0":
+                            c0+=1
+                    subset.append(riga)
+                    continue
+                elif c0>c1 and riga["label"] =="1":
+                    c1+=1
+                    subset.append(riga)
+                    continue
+                elif c0<c1 and riga["label"] == "0":
+                    c0+=1
+                    subset.append(riga)
+                    continue
+            else:
+                break
+    print(f"0: {c0}, 1: {c1}, totale estratti: {len(subset)}")
+    return subset
+
+
 def subset_selection (filename, row)->list: 
     subset = []
     c0 = 0
@@ -54,9 +89,9 @@ def main (filename: str, row: int, output:str, data:str):
             print(f"File {output} salvato")
             return
         case "validation":
-            df=pd.read_csv(filename)
-            df = df.tail(row).iloc[::-1]
-            df.to_csv (f"{output}", index=False)
+            df  = pd.DataFrame(validation_subset(filename,row), columns=["text", "label"])   
+            df = df.sample(frac=1).reset_index(drop=True)
+            df.to_csv(f"{output}", index=False)
             print(f"File {output} salvato")
             return
         case _:
