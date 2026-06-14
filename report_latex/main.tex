@@ -51,23 +51,56 @@
     \pagenumbering{arabic}
 
     \chapter{Dataset}
-
-    Sleek Template is a minimal collection of \LaTeX{} packages and settings that ease the writing of beautiful documents. While originally meant for theses, it is perfectly suitable for project reports, articles, syntheses, etc. -- with a few adjustments, like margins. As such the template is compatible with many document classes, such as \texttt{article}, \texttt{report} or \texttt{book}.
-
-    \begin{lstlisting}[style=ruled, language=latex, gobble=4]
-    \documentclass[a4paper,12pt,twoside,openany]{book}
+    \section{Subset del dataset}
+    Il dataset come da richiesta è stato preso dal primo sottotask (sub-task A) di \textit{EVALITA 2026}, ha il formato di una tabella csv composta da una colonna che contiene una serie di testi e la seconda contenente il relativo label di classificazione binaria che identifica se il testo contenuto sia stato generato da un umano (0) o da una macchina (1).
+    Sul sito del dataset erano presenti tre file scaricabili. Il primo file di training composto da una tabella csv con più di 33 mila entry, da questa sono stati richiesti due subset uno di training da 2000 righe e uno di validation da 1000, entrambi bilanciati, quindi con egual numero di label 0 e 1. Gli altri due file erano di test, uno contenente solo la colonna dei testi da classificare e l'altro contente le soluzioni corrette del test set. Dal test set con label è stato richiesto di estrarre 1000 item anch'essi bilanciati tra label 0 e 1.
+    L'estrazione bilanciata è avvenuta con l'ausilio di due contatori uno per ciascuna label di classificazione, come si può vedere dalla sezione di codice sotto riportata. Per ottenere il bilanciamento tra classi la logica di selezione delle entry prevede che i contatori abbiano lo stesso valore al termine dell'iterazione. A partire dal primo elemnto della tabella csv, se il valore dei contatori è uguale viene selezionata l'entry corrente per far parte del subset e incrementato il contatore corrispondente alla label nella seconda colonna, altrimenti dall'elemento corrente si scorrono le successive entry fino a trovare la prima che abbia label corrispondente al counter di valore minore.
+    \begin{lstlisting}[style=rulednumbered, language=python*, gobble=4]
+    #[...]
+        for riga in reader:
+        #riga contine il ['test'] e la ['label']
+            if c0+c1 < row:
+                if c0==c1: 
+                    match riga["label"]: 
+                        case"1":
+                            c1+=1
+                        case "0":
+                            c0+=1
+                    subset.append(riga)
+                    continue
+                elif c0>c1 and riga["label"] =="1":
+                    c1+=1
+                    subset.append(riga)
+                    continue
+                elif c0<c1 and riga["label"] == "0":
+                    c0+=1
+                    subset.append(riga)
+                    continue
+            else:
+                break
+    #[...]
     \end{lstlisting}
-
-    The template is composed of four separate packages which can be used individually: \texttt{sleek}, \texttt{sleek-title}, \texttt{sleek-theorems} and \texttt{sleek-listings}.
-
-    \begin{lstlisting}[style=ruled, language=latex, caption={Example of Sleek Template packages usage.}, gobble=4]
-    \usepackage[english]{babel}
-    \usepackage{packages/sleek}
-    \usepackage{packages/sleek-title}
+    Per l'estrazione del validation set la logica è la stessa, ma per non avere duplicati il file è stato letto al contrario, cioè a partire dall'ultima entry, infatti dato che ci sono più di 33mila campioni è imporbabile che con la selezione del subset di training si arrivi in fondo alla tabella. Nella sezione di codice sotto mostro come è stata invertita la tabella. 
+    \begin{lstlisting}[style=rulednumbered, language=python*, gobble=4]
+    #[...]
+        for riga in reversed(righe):
+    #[...]
     \end{lstlisting}
+    Tuttavia trattandosi di un evento altamente improbabile ma non impossibile (non ho letto il dataset), volevo essere sicura non ci fossero elementi in comune, perciò ho performato ulteriore verifica che il training set e il validation set non avessero righe in comune. Il check è stato eseguito direttamente da terminale con un piccolo script, riportato di seguito, il quale ha confermato l'assenza di sovrapposizioni.
+    \begin{lstlisting}[style=rulednumbered, language=python*, gobble=4]
+        import pandas as pd
 
-    \blindfootnote{If you are a \LaTeX{} beginner, consider the excellent tutorial \citetitle{overleaf}, \textcite{overleaf}. Also, there are a lot of symbols available in \LaTeX{} and, therefore, in this template. I recommend the use of \citetitle{pakin2020comprehensive}, \textcite{pakin2020comprehensive} for searching symbols.}
+        df1 = pd.read_csv('train_subset.csv')
+        df2 = pd.read_csv('validation_subset.csv')
 
+        # L'inner merge tiene solo ciò che è presente in ENTRAMBI i dataframe
+        if pd.merge(df1,df2, how='inner'):
+            print("ci sono elementi in comune")
+        else:
+            print("non ci sono elemnti in comune")
+    \end{lstlisting}
+    \section{N-grammi}
+    
     \chapter{Features}
 
     \section{\texttt{sleek}}

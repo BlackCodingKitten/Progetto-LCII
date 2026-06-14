@@ -1,13 +1,13 @@
 # Fdb version 4
-["biber main"] 1781253024.5534 "main.bcf" "main.bbl" "main" 1781253545.51012 0
+["biber main"] 1781342780.85223 "main.bcf" "main.bbl" "main" 1781419930.53172 0
   "./resources/bib/references.bib" 1781252742 516 22f47ba1dea03f2d086e17df2758c8f4 ""
-  "main.bcf" 1781253544 108530 eea8ec1f4904197f5ce8eddd0cebbea5 "pdflatex"
+  "main.bcf" 1781419929 108110 40871d5b0b79a9a58406ded21b42a0f3 "pdflatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1781253539.62632 "c:/Users/USER/Desktop/Uni/LCII/Progetto/Progetto-LCII/report_latex/main.tex" "main.pdf" "main" 1781253545.5112 0
-  "c:/Users/USER/Desktop/Uni/LCII/Progetto/Progetto-LCII/report_latex/main.tex" 1781253538 21594 615f3f7fea9e62bbcc98775d9479db56 ""
+["pdflatex"] 1781419924.49296 "c:/Users/USER/Desktop/Uni/LCII/Progetto/Progetto-LCII/report_latex/main.tex" "main.pdf" "main" 1781419930.53351 0
+  "c:/Users/USER/Desktop/Uni/LCII/Progetto/Progetto-LCII/report_latex/main.tex" 1781419917 24220 95e44f70fb6ce3c78e8150ae45d19fd2 ""
   "c:/texlive/2026/texmf-dist/fonts/enc/dvips/base/8r.enc" 1779190698 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "c:/texlive/2026/texmf-dist/fonts/enc/dvips/libertine/lbtn_25tcsq.enc" 1779192196 2921 8ca0eb0831f9bc5da080d3697cfe67bf ""
   "c:/texlive/2026/texmf-dist/fonts/enc/dvips/libertine/lbtn_76gpa5.enc" 1779192196 2933 9ad527ce78d7c5fa0a642dead095f172 ""
@@ -25,10 +25,8 @@
   "c:/texlive/2026/texmf-dist/fonts/tfm/public/amsfonts/euler/eufm10.tfm" 1779183994 1040 b84415f97d114011685943ade933dc71 ""
   "c:/texlive/2026/texmf-dist/fonts/tfm/public/amsfonts/euler/eufm7.tfm" 1779183994 1040 82eb6630b094bff824fccca83ff507f9 ""
   "c:/texlive/2026/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam10.tfm" 1779183994 916 f87d7c45f9c908e672703b83b72241a3 ""
-  "c:/texlive/2026/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam5.tfm" 1779183994 924 9904cf1d39e9767e7a3622f2a125a565 ""
   "c:/texlive/2026/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam7.tfm" 1779183994 928 2dc8d444221b7a635bb58038579b861a ""
   "c:/texlive/2026/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm10.tfm" 1779183994 908 2921f8a10601f252058503cc6570e581 ""
-  "c:/texlive/2026/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm5.tfm" 1779183994 940 75ac932a52f80982a9f8ea75d03a34cf ""
   "c:/texlive/2026/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm7.tfm" 1779183994 940 228d6584342e91276bf566bcf9716b83 ""
   "c:/texlive/2026/texmf-dist/fonts/tfm/public/bera/fvmr8c.tfm" 1779184317 1268 3764023d12371df1f4893e1c3e0d608c ""
   "c:/texlive/2026/texmf-dist/fonts/tfm/public/bera/fvmr8r.tfm" 1779184317 1292 a0ca2398d40dc5494f22d2fbff33269b ""
@@ -325,11 +323,11 @@
   "c:/texlive/2026/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1779195979 5619402 ad1310ccf7f36101ef3e8f014a173c46 ""
   "c:/texlive/2026/texmf-var/web2c/pdftex/pdflatex.fmt" 1779196292 3651065 04d97a6af36b4ade2f3eac635b71192c ""
   "c:/texlive/2026/texmf.cnf" 1779195939 713 e69b156964470283e0530f5060668171 ""
-  "main.aux" 1781253544 8580 6b15e9e2e8964464934edba0dd196665 "pdflatex"
-  "main.bbl" 1781253028 4205 0d5bfaaeef8fb543a0334f099272a1d0 "biber main"
-  "main.run.xml" 1781253544 2362 21e9bec9f7abf6336427f8da47af57a8 "pdflatex"
-  "main.tex" 1781253538 21594 615f3f7fea9e62bbcc98775d9479db56 ""
-  "main.toc" 1781253544 945 53455c7afd76717a365508647ff222d3 "pdflatex"
+  "main.aux" 1781419929 8579 ab57b36b48e20ccebe0dccde0c4e6150 "pdflatex"
+  "main.bbl" 1781342784 3056 f7c68d7bed12733666a26deef87e7485 "biber main"
+  "main.run.xml" 1781419929 2362 21e9bec9f7abf6336427f8da47af57a8 "pdflatex"
+  "main.tex" 1781419917 24220 95e44f70fb6ce3c78e8150ae45d19fd2 ""
+  "main.toc" 1781419929 1092 de4a466cda4718bcfb02423cefe96079 "pdflatex"
   "packages/sleek-listings.sty" 1781252742 4079 8795fb131771e279ba96bde28011c22f ""
   "packages/sleek-theorems.sty" 1781252742 3832 31696cf1d59747146a2f53eb2bb6cd9f ""
   "packages/sleek-title.sty" 1781252742 4144 4383b09b9327b196dcd25674bd37248d ""

@@ -19,32 +19,6 @@
 
 \refsection{0}
   \datalist[entry]{none/global//global/global/global}
-    \entry{overleaf}{misc}{}{}
-      \name{author}{1}{}{%
-        {{hash=80d685e90fa23d7996a66e45aa2d24ad}{%
-           family={Overleaf},
-           familyi={O\bibinitperiod}}}%
-      }
-      \strng{namehash}{80d685e90fa23d7996a66e45aa2d24ad}
-      \strng{fullhash}{80d685e90fa23d7996a66e45aa2d24ad}
-      \strng{fullhashraw}{80d685e90fa23d7996a66e45aa2d24ad}
-      \strng{bibnamehash}{80d685e90fa23d7996a66e45aa2d24ad}
-      \strng{authorbibnamehash}{80d685e90fa23d7996a66e45aa2d24ad}
-      \strng{authornamehash}{80d685e90fa23d7996a66e45aa2d24ad}
-      \strng{authorfullhash}{80d685e90fa23d7996a66e45aa2d24ad}
-      \strng{authorfullhashraw}{80d685e90fa23d7996a66e45aa2d24ad}
-      \field{sortinit}{1}
-      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{title}{Learn \LaTeX{} in 30 minutes}
-      \verb{urlraw}
-      \verb https://www.overleaf.com/learn/latex/Learn_LaTeX_in_30_minutes
-      \endverb
-      \verb{url}
-      \verb https://www.overleaf.com/learn/latex/Learn_LaTeX_in_30_minutes
-      \endverb
-    \endentry
     \entry{pakin2020comprehensive}{misc}{}{}
       \name{author}{1}{}{%
         {{hash=b835af205adc9f4cf7b438d1116ffb60}{%
@@ -61,8 +35,8 @@
       \strng{authornamehash}{b835af205adc9f4cf7b438d1116ffb60}
       \strng{authorfullhash}{b835af205adc9f4cf7b438d1116ffb60}
       \strng{authorfullhashraw}{b835af205adc9f4cf7b438d1116ffb60}
-      \field{sortinit}{4}
-      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{title}{The comprehensive \LaTeX{} symbol list}
@@ -90,8 +64,8 @@
       \strng{authornamehash}{93c71fed62527d4c8c6ae13ee771fcdd}
       \strng{authorfullhash}{93c71fed62527d4c8c6ae13ee771fcdd}
       \strng{authorfullhashraw}{93c71fed62527d4c8c6ae13ee771fcdd}
-      \field{sortinit}{8}
-      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{title}{\texttt{siunitx} -- A comprehensive (SI) units package}

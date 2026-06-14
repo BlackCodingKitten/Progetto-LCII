@@ -1,1 +1,2 @@
-*.csv filter=lfs diff=lfs merge=lfs -text
+.csv filter=lfs diff=lfs merge=lfs -text
+data/features/train_ngram_representations.csv filter=lfs diff=lfs merge=lfs -text
