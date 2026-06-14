@@ -289,35 +289,31 @@ def load_documents_from_csv(input_csv, split="train", spacy_model="it_core_news_
 # ESTRAZIONE N-GRAMMI NON NORMALIZZATI
 # ============================================================
 
-def counter_to_json_list(counter):
-    """
-    Converte un Counter in una lista di dizionari ordinata.
-
-    Ordinamento:
-    - frequenza decrescente;
-    - n-gramma crescente a parità di frequenza.
-    """
+def counter_to_json_list(counter, relative=False):
+    total = sum(counter.values())
 
     items = sorted(
         counter.items(),
         key=lambda item: (-item[1], item[0])
     )
 
-    return [
-        {
+    result = []
+
+    for ngram, freq in items:
+        if relative:
+            value = freq / total if total > 0 else 0
+        else:
+            value = int(freq)
+
+        result.append({
             "ngram": ngram,
-            "freq": int(freq)
-        }
-        for ngram, freq in items
-    ]
+            "freq": value
+        })
+
+    return result
 
 
-def extract_char_ngrams_from_text(text, n):
-    """
-    Estrae n-grammi di caratteri da una stringa.
-    Le frequenze sono conteggi assoluti.
-    """
-
+def extract_char_ngrams_from_text(text, n, relative=False):
     counter = Counter()
 
     if len(text) < n:
@@ -327,19 +323,10 @@ def extract_char_ngrams_from_text(text, n):
         ngram = text[i:i + n]
         counter[ngram] += 1
 
-    return counter_to_json_list(counter)
+    return counter_to_json_list(counter, relative=relative)
 
 
-def extract_sequence_ngrams(sequence, n):
-    """
-    Estrae n-grammi da una sequenza di:
-    - parole;
-    - lemmi;
-    - POS.
-
-    Le frequenze sono conteggi assoluti.
-    """
-
+def extract_sequence_ngrams(sequence, n, relative=False):
     counter = Counter()
 
     if len(sequence) < n:
@@ -350,7 +337,7 @@ def extract_sequence_ngrams(sequence, n):
         ngram = " ".join(ngram_items)
         counter[ngram] += 1
 
-    return counter_to_json_list(counter)
+    return counter_to_json_list(counter, relative=relative)
 
 
 # ============================================================
@@ -380,28 +367,22 @@ def build_row_from_document(document):
     for n in range(2, 5):
         column_name = f"char_{n}grams"
         row[column_name] = json.dumps(
-            extract_char_ngrams_from_text(processed_text, n),
+            extract_char_ngrams_from_text(processed_text, n,relative=True),
             ensure_ascii=False
         )
 
     for n in range(1, 5):
         column_name = f"word_{n}grams"
-        row[column_name] = json.dumps(
-            extract_sequence_ngrams(words, n),
-            ensure_ascii=False
-        )
+        row[column_name] = json.dumps(extract_sequence_ngrams(words, n, relative=True),ensure_ascii=False)
 
     for n in range(1, 5):
         column_name = f"lemma_{n}grams"
-        row[column_name] = json.dumps(
-            extract_sequence_ngrams(lemmas, n),
-            ensure_ascii=False
-        )
+        row[column_name] = json.dumps(extract_sequence_ngrams(lemmas, n, relative=True),ensure_ascii=False)
 
     for n in range(1, 5):
         column_name = f"pos_{n}grams"
         row[column_name] = json.dumps(
-            extract_sequence_ngrams(pos_tags, n),
+            extract_sequence_ngrams(pos_tags, n, relative=True),
             ensure_ascii=False
         )
 
