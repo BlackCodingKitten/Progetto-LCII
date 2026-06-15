@@ -9,6 +9,9 @@
 \usepackage{packages/sleek-title}
 \usepackage{packages/sleek-theorems}
 \usepackage{packages/sleek-listings}
+\usepackage{dirtree}
+\usepackage{booktabs}
+\usepackage{array}
 
 %%%%%%%%%%%%%%
 % Title-page %
@@ -28,8 +31,7 @@
 %%%%%%%%%%%%%%%%
 % Bibliography %
 %%%%%%%%%%%%%%%%
-
-\addbibresource{./resources/bib/references.bib}
+\addbibresource{resources/bib/references.bib}
 
 %%%%%%%%%%
 % Macros %
@@ -101,380 +103,109 @@
     \end{lstlisting}
     
     \section{Features}
-    \subsection{N-grammi}
-    
-    
-
-    \texttt{sleek} is the main package. It imports the packages (see Table \ref{tab:sleek_relevant_packages}) and setups the settings that make Sleek Template easy to use. The package provides two options:
-
-    \begin{enumerate}[noitemsep]
-        \item \texttt{header} adds a header with the current chapter to pages;
-        \item \texttt{french} makes the French setup consistent with other languages.
+    \paragraph{Ngrammi}
+    La prima rappresentazione del testo richiesta dalla traccia del progetto è la rappresentazione a ngrammi di vario tipo: caratteri, parole, lemmi e PartOfSpeech. 
+    Le mie scelte progettuali sono state: \textit{json} per salvare gli ngrammi con la propria frequenza relativa nei rispettivi csv, per la normalizzazione del testo ho usato le \textit{regex} e \textit{unicodedata}, quest'ultimo per normalizzare accenti e simboli, e la libreria \textit{spaCy} per le operazioni di tokenizzazione, lemmatizzazione e PartOfSpeech tagging. 
+    La pipeline del processo si può riassumere come:
+    \begin{enumerate}
+        \item Parte da una riga CSV: text,label
+        \item Normalizza il testo
+        \item Analizza il testo con spaCy
+        \item Divide il testo in frasi
+        \item Divide le frasi in token
+        \item Elimina spazi, punteggiatura e stop word
+        \item Per ogni token salva word, lemma e POS
+        \item Costruisce un oggetto Document
+        \item Estrae dal Document parole, lemmi e POS
+        \item Ricostruisce il testo processato con le sole parole rimaste
+        \item Estrae char n-gram da quel testo
+        \item Estrae word n-gram dalla lista di parole
+        \item Estrae lemma n-gram dalla lista di lemmi
+        \item Estrae POS n-gram dalla lista di POS
+        \item Conta gli n-grammi con Counter
+        \item Converte i conteggi in frequenze relative
+        \item Trasforma tutto in JSON e salva una riga nel CSV finale
     \end{enumerate}
-
-    However, nothing prevents you from tweaking the settings to your liking in the source code. For example, you can change the font of the document from \enquote{Linux Libertine} to \enquote{Latin Modern Roman}, by replacing
-
-    \begin{lstlisting}[style=ruled, language=latex, gobble=4]
-    % Font
-    \RequirePackage{libertine}
-    \RequirePackage{libertinust1math}
-    \RequirePackage[T1]{fontenc}
-    \end{lstlisting}
-
-    with
-
-    \begin{lstlisting}[style=ruled, language=latex, gobble=4]
-    % Font
-    \RequirePackage{lmodern}
-    \RequirePackage[T1]{fontenc}
-    \end{lstlisting}
-
-    in the \texttt{sleek.sty} file.
-
-    \subsection{Mathematics}
-
-    This template uses \texttt{amsmath} and \texttt{amssymb}, which are the de-facto standard for typesetting mathematics. Additionally, \texttt{esint} provides alternative integral symbols (see Table 78 in \cite{pakin2020comprehensive}) and \texttt{bm} is used for bold math symbols like vectors (see \eqref{eq:gauss_law}).
-
-    A few custom macros have also been added such as \texttt{\tbs{}rbk}, \texttt{\tbs{}sbk} and \texttt{\tbs{}cbk} for respectively round, square and curly brackets or \texttt{\tbs{}abs} for absolute value. Here follows some examples showcasing what is possible with the default packages of \texttt{sleek}.
-
-    \[
-        \rbk*{\pi}, \quad \sbk*{\frac{\pi}{2}}, \quad \cbk*{\pi=3 + \frac{1}{7 + \frac{1}{15 + \frac{1}{1 + \dots}}}}, \quad \abs{2 \pi}, \quad \norm{\frac{\pi}{4}}, \quad \ceil[\big]{\frac{22}{7}}, \quad \floor[\Big]{\frac{\pi^2}{6}}
-    \]
-
-    \begin{equation}\label{eq:gauss_law}
-        \oiint_S \bm{E} \cdot \d{\bm{s}} = \iiint_V \frac{\rho}{\varepsilon_0} \d{V}
-    \end{equation}
-
-    \begin{equation*}
-        e = \sum_{n=0}^\infty \frac{1}{\fact{n}}
-    \end{equation*}
-
-    \begin{subequations}
-        \begin{align}
-            \frac{\d{x}}{\d{t}} & = \alpha x - \beta xy \\
-            \frac{\d{y}}{\d{t}} & = \delta xy - \gamma y
-        \end{align}
-    \end{subequations}
-
-    \begin{align*}
-        \ln \abs{x} + C & = \int \frac{1}{x} \d{x} \\
-        \exp(x) & = \lim_{n \to \infty} \rbk*{1 + \frac{x}{n}}^n
-    \end{align*}
-
-    \begin{equation}
-        \left\{
-        \begin{aligned}
-            x & = r \sin \theta \cos \phi \\
-            y & = r \sin \theta \sin \phi \\
-            z & = r \cos \theta
-        \end{aligned}
-        \right.
-    \end{equation}
-
-    \begin{alignat*}{2}
-                              & & P(A, B)  & = P(A \mid B) P(B)                        \\
-        \Leftrightarrow \quad & & P(A \mid B) & = \frac{P(A, B)}{P(B)}                 \\
-                              & &          & = P(B \mid A) \frac{P(A)}{P(B)}
-    \end{alignat*}
-
-    \subsection{Units}
-
-    The \texttt{siunitx} package \cite{wright2022siunitx} provides three commands to typeset numbers, units and quantities: \texttt{\tbs{}num}, \texttt{\tbs{}unit} and \texttt{\tbs{}qty}.
-
-    It is possible to write, both in text or math modes, numbers without units (\eg{} \num{1}, \num{1.0}, \num{-1}, \num{3.14159}, \num{e100}, $N_A = \num{6.022e23}$), units without quantity (\eg{} $\unit{\joule} = \unit{\newton\meter} = \unit{\kilogram\meter\squared\per\second\squared}$) and, finally, quantities with their units (\eg{} \qty{9.81}{\meter\per\second\squared}, $c = \qty{299.6e6}{\meter\per\second}$).
-
-    \subsection{Lists}
-
-    Sleek Template uses \texttt{enumitem} to enhance the listing capabilities of \LaTeX{}. There are several lists environments:
-    \begin{itemize}[noitemsep]
-        \item \texttt{itemize} for unordered lists;
-        \item \texttt{enumerate} for ordered lists;
-        \item \texttt{description} for descriptive lists.
-    \end{itemize}
-
-    In a list, each element is preceded by the command \texttt{\tbs{}item}. It is possible to modify the labels
-    \begin{enumerate*}
-        \item individually with \texttt{\tbs{}item[newLabel]} or
-        \item for the whole environment with the \texttt{label=newLabel} option.
-    \end{enumerate*}
-
-    In the case of \texttt{enumerate}, \texttt{newLabel} can contain special expressions (see Table \ref{tab:enumerate_special_expressions}) that will adapt to the item number. For example, \texttt{label=(\tbs{}alph*)} defines the label sequence \enquote{(a), (b), (c), ...}. Still in the case of \texttt{enumerate}, the  \texttt{\tbs{}setcounter} and \texttt{\tbs{}addtocounter} commands allow to modify the current item number.
-
-    One could want to reduce the space between items with the \texttt{noitemsep} option or to delete the left margin with the \texttt{leftmargin=*} option.
-
-    It is also possible to write nested lists. Here follows a very condensed example.
-
-    \begin{itemize}[leftmargin=*]
-        \item Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-
-        Arcu ac tortor dignissim convallis aenean et tortor. In eu mi bibendum neque egestas congue quisque.
-
-        \item[$+$] Semper quis lectus nulla at volutpat diam ut. Felis eget velit aliquet sagittis id. Blandit aliquam etiam erat velit scelerisque in dictum non consectetur.
-        \begin{equation}
-            a^2 + b^2 = c^2
-        \end{equation}
-
-        \item Nibh sed pulvinar proin gravida hendrerit lectus. Pretium aenean pharetra magna ac placerat vestibulum lectus mauris. Non consectetur a erat nam at lectus urna duis.
-        \begin{enumerate}[noitemsep, label=\roman*.]
-            \item Nibh tortor id aliquet lectus. Sit amet justo donec enim diam vulputate ut pharetra sit.
-            \setcounter{enumi}{3}
-            \item Condimentum id venenatis a condimentum vitae. Quis eleifend quam adipiscing vitae proin sagittis nisl.
-            \addtocounter{enumi}{15}
-            \item Proin sagittis nisl rhoncus mattis rhoncus urna neque viverra.
-        \end{enumerate}
-
-        \item Elit scelerisque mauris pellentesque pulvinar pellentesque habitant morbi tristique senectus.
-            \begin{description}
-                \item[Ridiculus] mus mauris vitae ultricies leo. Mollis aliquam ut porttitor leo a diam. Velit egestas dui id ornare arcu odio ut sem nulla.
-                \item[Nullam vehicula] ipsum a arcu. Nibh sit amet commodo nulla facilisi nullam. At erat pellentesque adipiscing commodo elit. Libero volutpat sed cras ornare arcu dui.
-            \end{description}
-    \end{itemize}
-
-    \subsection{Figures}
-
-    Thanks to the \texttt{graphicx} package, it is possible to include external graphic documents (images, plots, etc.) in your document with the \texttt{\tbs{}includegraphics} command. Most image type format (\texttt{jpg}, \texttt{png}, \texttt{bmp}, etc.) are supported by this command. However, it should be noted that it is highly preferable to use vectorial types, such as \texttt{pdf} or \texttt{eps}.
-
-    \begin{figure}[h]
-        \centering
-        \includegraphics[width=0.5\textwidth]{resources/pdf/logo.pdf}
-        \caption{Random University logo.}
-        \label{fig:random_university_logo}
-    \end{figure}
-
-    \subsection{Tables}
-
-    The \texttt{multirow} package comes handy for complex table formatting such as multi-column or multi-row cells.
-
-    \begin{table}[H]
-        \centering
-        \begin{tabular}{|r|r|c|l|}
-            \hline
-            \multicolumn{3}{|l|}{a} & qrs  \\ \hline
-             b &  ef &     jkl      & tuvx \\ \hline
-            cd & ghi &     mnop     & wyz  \\ \hline
-        \end{tabular}
-        \caption{Example of multi-column cells.}
-        \label{tab:multicol_example}
-    \end{table}
-
-    \begin{table}[H]
-        \centering
-        \begin{tabular}{|l|c|r|}
-            \hline
-            \multirow{3}{2cm}{a} &   b   &    c \\ \cline{2-3}
-                                 &  de   &   fg \\ \cline{2-3}
-                                 &  hij  &  klm \\ \hline
-            nopq                 & rstuv & wxyz \\ \hline
-        \end{tabular}
-        \caption{Example of multi-row cells.}
-        \label{tab:multirow_example}
-    \end{table}
-
-    The \texttt{booktabs} package also provides tools to build publication-ready tables. The tables in Appendix \ref{chap:Tables} are good examples.
-
-    \clearpage
-    \section{\texttt{sleek-title}}
-
-    Sleek Template offers a custom title-page with the package \texttt{sleek-title}. The formatting of the title-page is automatically inferred from the fields that the user has provided.
-
-    The fields are \texttt{\tbs{}logo}, \texttt{\tbs{}institute}, \texttt{\tbs{}faculty}, \texttt{\tbs{}department}, \texttt{\tbs{}title}, \texttt{\tbs{}subtitle}, \texttt{\tbs{}author}, \texttt{\tbs{}supervisor}, \texttt{\tbs{}context} and \texttt{\tbs{}date}.
-
-    Among these, only \texttt{\tbs{}title}, \texttt{\tbs{}author} and \texttt{\tbs{}date} have to be provided. However, none of the fields should stay empty. Prefer deleting or commenting the line if so.
-
-    \begin{lstlisting}[style=ruled, language=latex, caption={Example of \texttt{sleek-title} title-page definition.}, gobble=4]
-    \logo{./resources/pdf/logo.pdf}
-    \institute{Random University}
-    \faculty{Faculty of Whatever Sciences}
-    %\department{Department of Anything but Psychology}
-    \title{A sleek \LaTeX{} template}
-    \subtitle{With a sleeker title-page}
-    \author{\textit{Author}\\Francois \textsc{Rozet}}
-    %\supervisor{Linus \textsc{Torvalds}}
-    %\context{A long time ago in a galaxy far, far away...}
-    \date{\today}
-    \end{lstlisting}
-
-    It is also possible to use Sleek Template without \texttt{sleek-title}, in which case the default \LaTeX{} title-page will be used.
-
-    \clearpage
-    \section{\texttt{sleek-theorems}}
-
-    \texttt{sleek-theorems} is based on the \texttt{amsthm} and \texttt{thmtools} packages. It provides a handful of theorem-like environments, each of which have different style and purpose: \texttt{theorem}, \texttt{lemma}, \texttt{proposition}, \texttt{proof}, \texttt{definition}, \texttt{hypothesis}, \texttt{method}, \texttt{question}, \texttt{answer}, \texttt{example}, \texttt{remark}, \texttt{note} and \texttt{tip}.
-
-    \begin{note}
-        The \texttt{french} and \texttt{german} options translate the names of the provided environments. It is also possible, and easy, to add your own language as an option in the source code.
-    \end{note}
-
-    \begin{theorem}[Triangle inequality]
-        Let be a triangle in Euclidean space. Then the sum of the lengths of two of its sides always surpass or equals the length of the third.
-    \end{theorem}
-
-    \begin{proof}
-        Let $a$, $b$ and $c$ be the lengths of the sides of a triangle in Euclidean space and $\alpha$, $\beta$, $\gamma$ their respective opposite angle. By the generalized Pythagoras' theorem, we have
-        \begin{alignat*}{2}
-                                  &  & c^2 & = a^2 + b^2 - 2ab \cos\gamma \\
-                                  &  &     & \leq a^2 + b^2 + 2ab         \\
-                                  &  &     & \leq (a + b)^2               \\
-            \Leftrightarrow \quad &  & c   & \leq a + b
-        \end{alignat*}
-        Therefore in any triangle, the sum of the lengths of two sides always surpass or equals the length of the third. \qed
-    \end{proof}
-
-    In addition, these environments also have framed versions -- \texttt{fmd-theorem}, \texttt{fmd-lemma}, etc. -- for better encapsulation.
-
-    \begin{fmd-theorem}[Triangle inequality]\label{thm:Triangle inequality}
-        Let be a triangle in Euclidean space. Then the sum of the lengths of two of its sides always surpass or equals the length of the third.
-    \end{fmd-theorem}
-
-    \begin{fmd-proof}
-        Let $a$, $b$ and $c$ be the lengths of the sides of a triangle in Euclidean space and $\alpha$, $\beta$, $\gamma$ their respective opposite angle. By the generalized Pythagoras' theorem, we have
-        \begin{alignat*}{2}
-                                  &  & c^2 & = a^2 + b^2 - 2ab \cos\gamma \\
-                                  &  &     & \leq a^2 + b^2 + 2ab         \\
-                                  &  &     & \leq (a + b)^2               \\
-            \Leftrightarrow \quad &  & c   & \leq a + b
-        \end{alignat*}
-        Therefore in any triangle, the sum of the lengths of two sides always surpass or equals the length of the third. \qed
-    \end{fmd-proof}
-
-    \begin{fmd-question*}
-        Based on the theorem \ref{thm:Triangle inequality}, what is the shortest path from a point $A$ to a point $B$ in Euclidean geometry ?
-    \end{fmd-question*}
-
-    \clearpage
-    \section{\texttt{sleek-listings}}
-
-    The \texttt{sleek-listings} package is a small collection of styles and languages for the \texttt{listings} package, which is useful to showcase nicely samples of code. The package provides the styles \texttt{default}, \texttt{numbered}, \texttt{framed}, \texttt{ruled}, \texttt{framednumbered} and \texttt{rulednumbered} and the languages \texttt{latex}, \texttt{c*}, \texttt{cpp*}, \texttt{matlab*}, \texttt{python*}, \texttt{java*} and \texttt{scheme}, with a simple color scheme for keywords and comments.
-
-    For instance, if you want to showcase Python code within a ruled code block (top and bottom rule) with line numbers, you can either import a \texttt{.py} file with
-
-    \begin{lstlisting}[style=ruled, language=latex, gobble=4]
-    \lstinputlisting[style=rulednumbered, language=python*]{filename.py}
-    \end{lstlisting}
-
-    or paste the code within the \LaTeX{} document as
-
+    Le strutture dati fondamentali sono la classe \textbf{Token} che rappresenta una singola parola/token del testo, di ciascun token vengono salvati la parola stessa, il lemma corrispondente e l'etichetta POS corrisondente alla categoria grammaticale.
+    La seconda classe fondamentale usata è la classe \textbf{Sentence} che contiene il testo della frase e la lista di token, più tutta una serie di metodi utili per la gestione, ad esempio poter aggiungere un token, richiedere la lista dei lemmi o quella delle etichette POS. La terza classe è la classe \textbf{Document} che rappresenta un documento intero salvandone path, id, di che split fa parte (train, test, validation), la label di classificazione, la lista delle frasi e la lista delle features che inizialmente è un dizionario vuoto. In questo specifico caso abbiamo un'istanza di Document per ogni testo nel csv, e come per le altre classi viene accompagnato da tutta una serie di metodi utili per l'uso della classe. 
+    La pipeline parte dalla funzione \texttt{create\_ngram\_csv()} che prima di tutto carica i documenti dalla tabella csv e li trasforma in oggetti Document, poi costruisce il dataframe in cui verranno salvati tutti i formati e tipi di ngrammi, e, infine, salva il nuovo csv.
+    Il caricamento dei documenti avviene tramite la funzione \texttt{load\_documents\_from\_csv()} che, usando la libreria \textit{pandas}, carica tutto il file in un dataframe, controllando che ci siano entrambe le colonne (text e label). Poi carica il modello spaCy che di default è \texttt{it\_core\_news\_sm}, cioè il modello italiano small ottimizzato per la CPU, addestrato sui testi di Wikipedia e Universal Dependencies. La tabella csv viene letta riga per riga e normalizzata e poi viene chiamata la funzione che costruisce, per ogni riga, gli oggetti Document.  
+    Il testo viene anche normalizzato attraverso la funzione \texttt{normalize\_text()} che prende il testo grezzo e con \textit{unicodedata} normalizza accenti e simboli se presenti, e con \texttt{text = re.sub(r\textbackslash s+", " ", text)} sostituisce spazi multipli, tab e newline con uno spazio singolo. Ho ritenuto opportuno non normalizzare le maiuscole, quindi il testo non viene mai trasformato in lowercase. Il testo così normalizzato passa alla funzione \texttt{build\_document\_from\_text()} che lo trasforma in un oggetto istanza di Document e con \texttt{nlp(text)} fa la divisione in frasi, tokenizzazione, lemmatizzazione, etichettatura POS e riconoscimento delle \textit{stop-words}. Per ogni frase del testo crea la rispettiva istanza di Sentence e poi scorre i token della frase, spazi e punteggatura non vengono considerati come token perciò vengono saltati, così come le stop-words, per ogni token rimasto da questo processo viene creata un'istanza della classe Token, che oltre la parola contiene anche il lemma e l'etichetta POS. Da qui il processo procede al ritroso, l'istanza di ogni token viene aggiunta all'istanza di Sentence tramite il metodo \texttt{add\_token()}, quando la frase viene completata questa viene riaggiunta all'istanza di Document corrispondente tramite il metodo di classe \texttt{add\_sentence()}.
+    Dopo aver costruito tutti i Documents lo script chiama \texttt{build\_ngram\_dataframe()} questa funzione prende la lista dei documenti e li trasforma in una riga del dataframe finale. La funzione che si occupa della trasformazione è:
     \begin{lstlisting}[style=rulednumbered, language=python*, gobble=4]
-    import numpy as np # Unnecessary import
+        def build_row_from_document(document):
+            words = document.get_words()
+            lemmas = document.get_lemmas()
+            pos_tags = document.get_pos_tags()
 
-    a, b = 69., .420
+            processed_text = " ".join(words)
 
-    def f(a: float, b: float) -> float:
-        r"""Sum two numbers
+            row = {}
 
-        Parameters
-        ----------
-        a: first number
-        b: second number
+            row["text"] = processed_text
 
-        Returns
-        -------
-        the sum of 'a' and 'b'
-        """
+            for n in range(2, 5):
+                column_name = f"char_{n}grams"
+                row[column_name] = json.dumps(
+                    extract_char_ngrams_from_text(processed_text, n,relative=True),
+                    ensure_ascii=False
+                )
 
-        return a + b
+            for n in range(1, 5):
+                column_name = f"word_{n}grams"
+                row[column_name] = json.dumps(extract_sequence_ngrams(words, n, relative=True),
+                ensure_ascii=False
+                )
 
-    c = f(a, b)
+            for n in range(1, 5):
+                column_name = f"lemma_{n}grams"
+                row[column_name] = json.dumps(extract_sequence_ngrams(lemmas, n, relative=True),
+                ensure_ascii=False
+                )
 
-    print('{:f} + {:f} equals {:f}'.format(a, b, c))
+            for n in range(1, 5):
+                column_name = f"pos_{n}grams"
+                row[column_name] = json.dumps(
+                    extract_sequence_ngrams(pos_tags, n, relative=True),
+                    ensure_ascii=False
+                )
+
+            row["label"] = document.label
+
+            return row
     \end{lstlisting}
+    Lavora estrendo prima le tre liste (parole/lemmi/POS) e poi costruisce il testo processato da inserire nella colonna del csv finale. Gli ngrammi di caratteri vengono estratti da \texttt{extract\_char\_ngrams\_from\_text()}, gli ngrammi di parole si ricavano con \texttt{extract\_sequence\_ngrams()}. La seconda funzione in particolare prende in input una lista, quindi per estrarre i lemmi riuso la stessa funzione, ma passando la lista dei lemmi ottenuta all'inizio della funzione (\texttt{lemmas = document.get\_lemmas()}) e lo stesso per gli ngrammi di etichette POS. A ciascuno degli ngrammi sia di caratteri che di parole/lemmi/POS viene associata la loro frequenza, in questo caso relativa, tramite il settaggio della flag \texttt{relative=True}. Gli ngrammi vengono contati con l'impiego di \texttt{Counter()} che poi tramite la funzione \texttt{counter\_to\_json\_list()} viene trasformato in una lista json associando ogni contatore al rispettivo ngramma per ciascun documento e calcolandone la frequenza relativa. 
 
-    \printbibliography
+    \chapter{Sviluppo e Discussione}
+    \section{Classificatore basato su SVM lineari e n-grammi}
+    
+    
+    \section{Classificatore basato su Support Vector Machine (SVM) lineari
+    e informazioni linguistiche non lessicali}
 
-    \appendix
 
-    \chapter{Tables} \label{chap:Tables}
+    \section{Classificatore basato su SVM lineari e word embedding}
 
-    \begin{table}[h]
-        \centering
-        \begin{tabular}{ll}
-            \toprule
-            \textbf{Package} & \textbf{Purpose} \\
-            \midrule
-            \texttt{amsmath} & Mathematical typesetting \\
-            \texttt{amsthm} & Mathematical environments for theorems, proofs, etc. \\
-            \texttt{booktabs} & Weighted rules for tables \\
-            \texttt{biblatex} & Bibliography \\
-            \texttt{csquotes} & Inline and display quotations \\
-            \texttt{enumitem} & Lists and enumerations \\
-            \texttt{float} & Floating objects such as figures and tables \\
-            \texttt{graphicx} & Graphics \\
-            \texttt{hyperref} & Hyperlinks and bookmarks \\
-            \texttt{listings} & Code listings \\
-            \texttt{multirow} & Table cells that span multiple columns or rows \\
-            \texttt{siunitx} & Typesetting of units  \\
-            \texttt{subcaption} & Sub-figures and sub-captions \\
-            \bottomrule
-        \end{tabular}
-        \caption{List of the most relevant packages imported by Sleek Template.}
-        \label{tab:sleek_relevant_packages}
-    \end{table}
+    \chapter{Fine-tuning di un modello di linguaggio neurale (Neural Language Model)}
 
-    \begin{table}[h]
-        \centering
-        \begin{tabular}{>{\ttfamily}ll}
-            \toprule
-            \{\tbs{}rmfamily abcABC123\}        & {\rmfamily abcABC123}        \\
-            \{\tbs{}sffamily abcABC123\}        & {\sffamily abcABC123}        \\
-            \{\tbs{}ttfamily abcABC123\}        & {\ttfamily abcABC123}        \\
-            \{\tbs{}mdseries abcABC123\}        & {\mdseries abcABC123}        \\
-            \{\tbs{}bfseries abcABC123\}        & {\bfseries abcABC123}        \\
-            \{\tbs{}itshape abcABC123\}         & {\itshape abcABC123}         \\
-            \{\tbs{}scshape abcABC123\}         & {\scshape abcABC123}         \\
-            \{\tbs{}slshape abcABC123\}         & {\slshape abcABC123}         \\
-            \{\tbs{}upshape abcABC123\}         & {\upshape abcABC123}         \\
-            \midrule
-            \tbs{}emph\{abcABC123\}            & \emph{abcABC123}            \\
-            \tbs{}lowercase\{abcABC123\}       & \lowercase{abcABC123}       \\
-            \tbs{}normalfont\{abcABC123\}      & \normalfont{abcABC123}      \\
-            \tbs{}textrm\{abcABC123\}          & \textrm{abcABC123}          \\
-            \tbs{}textbf\{abcABC123\}          & \textbf{abcABC123}          \\
-            \tbs{}textit\{abcABC123\}          & \textit{abcABC123}          \\
-            \tbs{}textsc\{abcABC123\}          & \textsc{abcABC123}          \\
-            \tbs{}textsf\{abcABC123\}          & \textsf{abcABC123}          \\
-            \tbs{}textsl\{abcABC123\}          & \textsl{abcABC123}          \\
-            \tbs{}textsubscript\{abcABC123\}   & \textsubscript{abcABC123}   \\
-            \tbs{}textsuperscript\{abcABC123\} & \textsuperscript{abcABC123} \\
-            \tbs{}texttt\{abcABC123\}          & \texttt{abcABC123}          \\
-            \tbs{}underline\{abcABC123\}       & \underline{abcABC123}       \\
-            \tbs{}uppercase\{abcABC123\}       & \uppercase{abcABC123}       \\
-            \bottomrule
-        \end{tabular}
-        \caption{Available text fonts in \LaTeX{}.}
-        \label{tab:text_fonts}
-    \end{table}
-
-    \begin{table}[h]
-        \centering
-        \begin{tabular}{>{\ttfamily\$}l<{\$}l}
-            \toprule
-            \tbs{}mathcal\{abcABC123\}    & $\mathcal{abcABC123}$ \\
-            \tbs{}mathit\{abcABC123\}     & $\mathit{abcABC123}$ \\
-            \tbs{}mathnormal\{abcABC123\} & $\mathnormal{abcABC123}$ \\
-            \tbs{}mathrm\{abcABC123\}     & $\mathrm{abcABC123}$ \\
-            \tbs{}mathbb\{abcABC123\}     & $\mathbb{abcABC123}$ \\
-            \tbs{}mathfrak\{abcABC123\}   & $\mathfrak{abcABC123}$ \\
-            \bottomrule
-        \end{tabular}
-        \caption{Available math fonts in \LaTeX{} and AMS.}
-        \label{tab:math_fonts}
-    \end{table}
-
-    \begin{table}[h]
-        \centering
-        \begin{tabular}{ll}
-            \toprule
-            \textbf{Expression} & \textbf{Description} \\
-            \midrule
-            \texttt{\tbs{}arabic*} & Arabic numbers (1, 2, 3, ...) \\
-            \texttt{\tbs{}alph*}   & Lowercase letters (a, b, c, ...) \\
-            \texttt{\tbs{}Alph*}   & Uppercase letters (A, B, C, ...) \\
-            \texttt{\tbs{}roman*}  & Lowercase Roman numerals (i, ii, iii, ...) \\
-            \texttt{\tbs{}Roman*}  & Uppercase Roman numerals (I, II, III, ...) \\
-            \bottomrule
-        \end{tabular}
-        \caption{Special expressions for the label of \texttt{enumerate} environments.}
-        \label{tab:enumerate_special_expressions}
-    \end{table}
-
-\end{document}
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    \end{document}
