@@ -2,3 +2,6 @@
 data/features/train_ngram_representations.csv filter=lfs diff=lfs merge=lfs -text
 data/features/test_ngram_representations.csv filter=lfs diff=lfs merge=lfs -text
 data/features/validation_ngram_representations.csv filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
+*.csv filter=lfs diff=lfs merge=lfs -text
+*.xlsx filter=lfs diff=lfs merge=lfs -text
