@@ -12,7 +12,14 @@
 \usepackage{dirtree}
 \usepackage{booktabs}
 \usepackage{array}
+\usepackage[table]{xcolor}
+\usepackage{booktabs}
+\usepackage{graphicx}
 
+
+\definecolor{bestgreen}{HTML}{D9EAD3}
+\definecolor{midyellow}{HTML}{FFF2CC}
+\definecolor{worstred}{HTML}{F4CCCC}
 %%%%%%%%%%%%%%
 % Title-page %
 %%%%%%%%%%%%%%
@@ -54,6 +61,7 @@
 
     \chapter{Dataset}
     \section{Subset del dataset}
+    
     Il dataset come da richiesta è stato preso dal primo sottotask (sub-task A) di \textit{EVALITA 2026}, ha il formato di una tabella csv composta da una colonna che contiene una serie di testi e la seconda contenente il relativo label di classificazione binaria che identifica se il testo contenuto sia stato generato da un umano (0) o da una macchina (1).
     Sul sito del dataset erano presenti tre file scaricabili. Il primo file di training composto da una tabella csv con più di 33 mila entry, da questa sono stati richiesti due subset uno di training da 2000 righe e uno di validation da 1000, entrambi bilanciati, quindi con egual numero di label 0 e 1. Gli altri due file erano di test, uno contenente solo la colonna dei testi da classificare e l'altro contente le soluzioni corrette del test set. Dal test set con label è stato richiesto di estrarre 1000 item anch'essi bilanciati tra label 0 e 1.
     L'estrazione bilanciata è avvenuta con l'ausilio di due contatori uno per ciascuna label di classificazione, come si può vedere dalla sezione di codice sotto riportata. Per ottenere il bilanciamento tra classi la logica di selezione delle entry prevede che i contatori abbiano lo stesso valore al termine dell'iterazione. A partire dal primo elemnto della tabella csv, se il valore dei contatori è uguale viene selezionata l'entry corrente per far parte del subset e incrementato il contatore corrispondente alla label nella seconda colonna, altrimenti dall'elemento corrente si scorrono le successive entry fino a trovare la prima che abbia label corrispondente al counter di valore minore.
@@ -103,6 +111,7 @@
     \end{lstlisting}
     
     \section{Features}
+    \label{sec:feratures}
     \paragraph{Ngrammi}
     La prima rappresentazione del testo richiesta dalla traccia del progetto è la rappresentazione a ngrammi di vario tipo: caratteri, parole, lemmi e PartOfSpeech. 
     Le mie scelte progettuali sono state: \textit{json} per salvare gli ngrammi con la propria frequenza relativa nei rispettivi csv, per la normalizzazione del testo ho usato le \textit{regex} e \textit{unicodedata}, quest'ultimo per normalizzare accenti e simboli, e la libreria \textit{spaCy} per le operazioni di tokenizzazione, lemmatizzazione e PartOfSpeech tagging. 
@@ -178,8 +187,123 @@
 
     \chapter{Sviluppo e Discussione}
     \section{Classificatore basato su SVM lineari e n-grammi}
-    
-    
+    Il programma che si occupa di eseguire la classificazione tramite Linear-SVM basato su ngrammi è \texttt{svm\_ngrams.py} il quale prende il file csv di training già preparato con la rappresentazione ad ngrammi come illustrato nella Sezione \ref{sec:feratures}. Lo script costruisce diversi modelli e, come da richiesta progettuale, li valuta tramite cross-validation stratificata a 5 fold. Vengono aggiunte anche delle metriche che ritengo utili per valutare un modello di classificazione binaria, quali:
+    \begin{itemize}
+        \item \textbf{Accuracy}: è la metrica che misura la percentuale di previsioni corrette effettuate da un modello rispetto al totale. È calcolata come il rapporto tra le previsioni corrette e il totale delle previsioni.
+        \item \textbf{F1-Score}: è la media armonica tra Precisione (capacità di non commettere falsi positivi) e Recall/Richiamo (capacità di individuare tutti i casi positivi). Il punteggio varia da 0 (pessimo) a 1 (perfetto). 
+        \item \textbf{ROC-AUC}: (Receiver Operating Characteristic - Area Under the Curve) è una metrica di valutazione per modelli di classificazione binaria. Misura la capacità del modello di distinguere tra le classi, rappresentando graficamente il rapporto tra veri positivi e falsi positivi al variare della soglia di classificazione. Il suo punteggio è compreso tra 0 e 1.
+    \end{itemize}
+    I risultati vengono salvati su un file Exel. Il progetto richiedeva prprio di sperimentare diverse configuarzioni di features e di selezionare poi il modello con le performance migliori. La una delle classi usate, sulla base di come ho deciso di rappresentare le feature di ngrammi\footnote{Perché nel CSV ogni colonna di n-grammi contiene celle in formato JSON.}, è \texttt{NgramJSONVectorizer}, Il problema della SVM è il non poter lavorare direttamente su stringhe JSON, ma ha bisogno di una matrice numerica in input.
+    Quindi il vettorizzatore json fa questa trasformazione da stringa a dizionario python e poi \texttt{DictVectorizer} prende questo dizionario e lo trasforma in una matrice numerica sparsa in modo da poterla dare come input alla SVM. La funzione \texttt{get\_ngram\_representations()} definisce tutti i gruppi di feature che la SVM deve testare. Oltre alle features singole ho definito anche cinque configuarzioni extra che sono: \begin{itemize}
+        \item char\_2\_3\_4grams : tutte le rappresentazioni dal bigramma al 4-gramma di caratteri.
+        \item word\_1\_2\_3\_4grams  : tutte le le rappresentazioni dall'unigramma al 4-gramma di parole. 
+        \item lemma\_1\_2\_3\_4grams : tutte le le rappresentazioni dall'unigramma al 4-gramma di lemmi.
+        \item pos\_1\_2\_3\_4grams : tutte le le rappresentazioni dall'unigramma al 4-gramma di etichette POS.
+        \item all\_ngrams : tutte le rappresentazioni prese insieme. 
+    \end{itemize}
+    In totale sono 20 rappresentazioni e per ciascuna vengono calcolati 6 valori di \textit{c}. Il parametro \textit{C} controlla la forza della regolarizzazione in modo inversamente proporzionale, la classe \texttt{GridSearchCV} di \textit{scikit-learn} permette di testare automaticamente combinazioni diverse di valori per trovare quello ottimale. Più è basso il vaore di C più la regolarizzazione è forte e il modello tenderà a semplificare penalizzando i pesi elevati, per valori alti di C, invece, il modello impone una regolarizzazione debole o nulla, in questo modo il modello si adatta maggiormente ai dati di training cercando di minimizzare l'errore, con un alto rischio di overfitting. 
+    Prima di passare in input la matrice uso \texttt{StandardScaler(with\_mean=False)} in modo da rendere le feature confrontabili in scala logaritmica. L'uso del parametro \texttt{with\_mean=False} mantiene la matrice sparsa: è necessario perchè la matrice degli ngrammi è sparsa, cioè contiene tantissimi zeri: per esempio, un documento che usa solo una piccola parte di tutti gli ngrammi possibili, se si sottraesse la media, la matrice perderebbe la sua sparsità e diventerebbe molto più pesante in memoria. La SVM lineare lavora con la funzione $$ff(x) = w · x + b $$, con \textit{w}: pesi delle features, \textit{b}: bias e \textit{x}: vettore del testo, se $$f(x) > 0$$ allora il documento viene assegnato alla classe \textbf{1}, \textbf{0} altrimenti. La SVM cerca la separazione lineare, quindi la retta, con margine massimo, cioè quella che meglio separa e tiene più distanti possibile le due classi dal confine decisionale. Il confine decisionale è rappresentato dall'equazione $$w · x + b = 0$$, e sono proprio i documenti che si trovano più vicini a questa zona di confine che determinano più incisivamente la posizione dell'iperpiano di separazione, infatti vengono chiamati \textbf{support vectors}. 
+    Per la cross-validation a 5 fold nello script uso: 
+    \begin{lstlisting}[style=rulednumbered, language=python*, gobble=4]
+
+        StratifiedKFold(
+            n_splits=5,
+            shuffle=True,
+            random_state=42 #il seed che uso sempre come easter-egg di Guida Galattica per Autostoppisti
+        )
+    \end{lstlisting} 
+    Ho scelto di usare \texttt{StratifiedKFold} anzichè il K-Fold normlale perchè quando fa la divisione del dataset cerca di mantenere in ogni fold la stessa proporzione tra le classi presente nel dataset originale. Il dataset è stato creato specificatamente bilanciato 50/50, per cui anche nella divisione a 5 parti si mantiene il bilanciamento tra le classi. 
+    Ogni modello viene valutato 5 volte sulle 5 fold e per ciascuno di essi il codice salva l'accuracy,f1-score e roc-auc e poi clacola l'accuracy media e la deviazione standard tra i vari risultati e così per tutte e 3 le metriche. Tramite l'impiego di \texttt{GridSearchCV} vengono provati automaticamente sei valori di C\footnote{0.001, 0.01, 0.1, 1, 10, 100}, per ciascuno di questi viene eseguita una 5-fold cross-validation, e poi vengono riportati tutti in tabella. Siccome non volevo avere salvati 121 modelli diversi prima di sapere qual è il migliore ho impostato \texttt{refit = False}, questo significa che alla fine non viene riaddestrato automaticamente un modello finale su tutto il training set, il programma produce solo la tabella comparativa dei risultati, quindi ogni riga è identificativa della configurazione usata e delle sue performance. 
+    \paragraph{Scelta del modello migliore.} La selezione del modello migliore è stata effettuata considerando principalmente la F1 macro media sui 5 fold, affiancata da accuracy media, ROC-AUC media e deviazione standard delle metriche. La F1 macro è stata privilegiata perché consente di valutare il comportamento del classificatore su entrambe le classi del task, evitando di selezionare modelli apparentemente accurati ma sbilanciati verso una sola classe. Il modello migliore risulta essere il modello con rappresentazione a unigrammi di parola e parametro C = 0.001. Il modello ottiene accuracy media pari a 0.9465, F1 media pari a 0.9465 e ROC-AUC media pari a 0.9869. Poiché le configurazioni con la stessa rappresentazione e valori più alti di C ottengono risultati identici, è stato selezionato il valore di C più basso, in quanto maggiormente regolarizzato. Tra gli altri modelli efficaci si osservano buone prestazioni per char\_2\_3\_4grams, lemma\_1grams e char\_3grams. Il modello peggiore è invece quello basato su quadrigrammi di parole, che ottiene accuracy media pari a 0.5000 e F1 macro media pari a 0.3333, indicando un comportamento vicino al caso e fortemente sbilanciato nella classificazione.
+    La scelta di usare F1 score come metrica più importante nella selezione del modello è data dal tipo di task. Abbiamo un compito di decisione binaria, la F1 macro penalizza i modelli che funzionano bene solo su una classe e non sull'altra. dato che il dataset è bilanciato, anche l'accuracy è informativa, però la F1 macro rimane più prudente, perchè controlla meglio l'equilibrio tra le due classi. La metrica valutata in seconda è la ROC-AUC che misura la capacità del modello di separare le due classi, ma non garantisce nulla sulla bontà di risposta del modello. I modelli che usano momgrammi di parole sono quelli che in questo caso rendono meglio.
+    \begin{table}[htbp]
+\centering
+\small
+\resizebox{\linewidth}{!}{
+\begin{tabular}{lllrrrrrrr}
+\toprule
+\textbf{Ruolo} &
+\textbf{Modello} &
+\textbf{Rappresentazione} &
+\textbf{C} &
+\textbf{Accuracy mean} &
+\textbf{Accuracy std} &
+\textbf{F1 Score mean} &
+\textbf{F1 Score std} &
+\textbf{ROC-AUC mean} &
+\textbf{ROC-AUC std} \\
+\midrule
+
+\rowcolor{bestgreen}
+Migliore &
+model\_25 &
+word\_1grams &
+0.001 &
+0.9465 &
+0.0101 &
+0.9465 &
+0.0101 &
+0.9869 &
+0.0023 \\
+
+\rowcolor{midyellow}
+Buono &
+model\_19 &
+char\_2\_3\_4grams &
+0.001 &
+0.9440 &
+0.0137 &
+0.9440 &
+0.0137 &
+0.9811 &
+0.0055 \\
+
+\rowcolor{midyellow}
+Buono &
+model\_55 &
+lemma\_1grams &
+0.001 &
+0.9420 &
+0.0113 &
+0.9420 &
+0.0113 &
+0.9862 &
+0.0040 \\
+
+\rowcolor{midyellow}
+Buono &
+model\_7 &
+char\_3grams &
+0.001 &
+0.9400 &
+0.0147 &
+0.9400 &
+0.0148 &
+0.9770 &
+0.0062 \\
+
+\rowcolor{worstred}
+Peggiore &
+model\_43 &
+word\_4grams &
+0.001 &
+0.5000 &
+0.0000 &
+0.3333 &
+0.0000 &
+0.5762 &
+0.0076 \\
+
+\bottomrule
+\end{tabular}
+}
+\caption{Confronto tra il modello migliore, tre modelli intermedi validi e il modello peggiore. Sono riportate le tre metriche principali calcolate tramite 5-fold cross-validation, insieme alla rispettiva deviazione standard.}
+\label{tab:confronto_modelli_svm}
+\end{table}
+Il risultato principale evidenzia che le rappresentazioni lessicali semplici superano in efficacia quelle eccessivamente complesse.  
+
+Tra tutte, la migliore è "word\_1grams", ovvero gli unigrammi di parola. Questo implica che, per distinguere i testi scritti da esseri umani da quelli generati automaticamente, è sufficiente lavorare con le parole singole del dataset. Strutture più lunghe, come i trigrammi o i quadrigrammi, tendono invece a ridurre le prestazioni, molto probabilmente ciò accade a causa dell'eccessiva dispersione, che genera un numero elevato di feature rare incapaci di generalizzare adeguatamente.  
+Le rappresentazioni basate sui caratteri dimostrano un'ottima efficacia, in particolare con i "char\_2\_3\_4grams", perché riescono a cogliere aspetti stilistici e morfologici significativi. I lemmi offrono buone prestazioni, ma leggermente inferiori rispetto alle forme lessicali originali. Gli elementi POS (parti del discorso) risultano meno efficaci poiché sono troppo astratti: conservano la struttura grammaticale, ma perdono informazioni sul contenuto lessicale, che in questo contesto sembra essere cruciale.  
     \section{Classificatore basato su Support Vector Machine (SVM) lineari
     e informazioni linguistiche non lessicali}
 
@@ -188,12 +312,6 @@
 
     \chapter{Fine-tuning di un modello di linguaggio neurale (Neural Language Model)}
 
-    
-    
-    
-    
-    
-    
     
     
     
