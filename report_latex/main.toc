@@ -6,7 +6,8 @@
 \contentsline {chapter}{\numberline {2}Sviluppo e Discussione}{6}{chapter.2}%
 \contentsline {section}{\numberline {2.1}Classificatore basato su SVM lineari e n-grammi}{6}{section.2.1}%
 \contentsline {paragraph}{Scelta del modello migliore.}{8}{paragraph*.3}%
-\contentsline {section}{\numberline {2.2}Classificatore basato su Support Vector Machine (SVM) lineari e informazioni linguistiche non lessicali}{9}{section.2.2}%
-\contentsline {section}{\numberline {2.3}Classificatore basato su SVM lineari e word embedding}{9}{section.2.3}%
-\contentsline {chapter}{\numberline {3}Fine-tuning di un modello di linguaggio neurale (Neural Language Model)}{10}{chapter.3}%
+\contentsline {paragraph}{Validation e test sul miglior modello.}{9}{paragraph*.5}%
+\contentsline {section}{\numberline {2.2}Classificatore basato su Support Vector Machine (SVM) lineari e informazioni linguistiche non lessicali}{10}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Classificatore basato su SVM lineari e word embedding}{10}{section.2.3}%
+\contentsline {chapter}{\numberline {3}Fine-tuning di un modello di linguaggio neurale (Neural Language Model)}{11}{chapter.3}%
 \contentsfinish 

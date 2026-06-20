@@ -15,6 +15,7 @@
 \usepackage[table]{xcolor}
 \usepackage{booktabs}
 \usepackage{graphicx}
+\usepackage{float}
 
 
 \definecolor{bestgreen}{HTML}{D9EAD3}
@@ -209,7 +210,8 @@
         StratifiedKFold(
             n_splits=5,
             shuffle=True,
-            random_state=42 #il seed che uso sempre come easter-egg di Guida Galattica per Autostoppisti
+            random_state=42
+            #il seed che uso sempre come easter-egg di Guida Galattica per Autostoppisti
         )
     \end{lstlisting} 
     Ho scelto di usare \texttt{StratifiedKFold} anzichè il K-Fold normlale perchè quando fa la divisione del dataset cerca di mantenere in ogni fold la stessa proporzione tra le classi presente nel dataset originale. Il dataset è stato creato specificatamente bilanciato 50/50, per cui anche nella divisione a 5 parti si mantiene il bilanciamento tra le classi. 
@@ -303,7 +305,9 @@ word\_4grams &
 Il risultato principale evidenzia che le rappresentazioni lessicali semplici superano in efficacia quelle eccessivamente complesse.  
 
 Tra tutte, la migliore è "word\_1grams", ovvero gli unigrammi di parola. Questo implica che, per distinguere i testi scritti da esseri umani da quelli generati automaticamente, è sufficiente lavorare con le parole singole del dataset. Strutture più lunghe, come i trigrammi o i quadrigrammi, tendono invece a ridurre le prestazioni, molto probabilmente ciò accade a causa dell'eccessiva dispersione, che genera un numero elevato di feature rare incapaci di generalizzare adeguatamente.  
-Le rappresentazioni basate sui caratteri dimostrano un'ottima efficacia, in particolare con i "char\_2\_3\_4grams", perché riescono a cogliere aspetti stilistici e morfologici significativi. I lemmi offrono buone prestazioni, ma leggermente inferiori rispetto alle forme lessicali originali. Gli elementi POS (parti del discorso) risultano meno efficaci poiché sono troppo astratti: conservano la struttura grammaticale, ma perdono informazioni sul contenuto lessicale, che in questo contesto sembra essere cruciale.  
+Le rappresentazioni basate sui caratteri dimostrano un'ottima efficacia, in particolare con i "char\_2\_3\_4grams", perché riescono a cogliere aspetti stilistici e morfologici significativi. I lemmi offrono buone prestazioni, ma leggermente inferiori rispetto alle forme lessicali originali. Gli elementi POS (parti del discorso) risultano meno efficaci poiché sono troppo astratti: conservano la struttura grammaticale, ma perdono informazioni sul contenuto lessicale, che in questo contesto sembra essere cruciale.
+\paragraph{Validation e test sul miglior modello.} 
+Il modello selezionato è una SVM lineare con rappresentazione basata su unigrammi di parola. Dopo la selezione tramite 5-fold cross-validation sul training set, il modello migliore è stato addestrato sul training set e valutato separatamente su training, validation e test. I risultati mostrano una prestazione perfetta sul training set, mentre su validation le prestazioni restano molto alte e sul test set si osserva un calo più marcato. \begin{table}[H] \centering \begin{tabular}{l l l c c c c} \hline \textbf{Split} & \textbf{Modello} & \textbf{Rappresentazione} & \textbf{C} & \textbf{Accuracy} & \textbf{F1 macro} & \textbf{ROC-AUC} \\ \hline Train & SVC lineare & word\_1grams & 0.001 & 1.000 & 1.000 & 1.000 \\ Validation & SVC lineare & word\_1grams & 0.001 & 0.948 & 0.948 & 0.985 \\ Test & SVC lineare & word\_1grams & 0.001 & 0.796 & 0.790 & 0.891 \\ \hline \end{tabular} \caption{Prestazioni del modello SVM lineare selezionato con rappresentazione basata su unigrammi di parola.} \label{tab:svc-linear-word1-results} \end{table} \begin{figure}[H] \centering \includegraphics[width=0.75\textwidth]{resources/images/svc_linear_word1_hinge_loss_learning_curve.png} \caption{Learning curve del modello SVM lineare con rappresentazione basata su unigrammi di parola e hinge loss.} \label{fig:svc-linear-word1-learning-curve} \end{figure}Il risultato perfetto sul training set è spiegabile dal fatto che il modello viene valutato sugli stessi dati usati per apprendere i pesi. Inoltre, una rappresentazione a unigrammi genera uno spazio molto ampio e sparso, nel quale i documenti del training possono risultare facilmente separabili da una SVM lineare. Il calo sul test set indica però che il modello non generalizza allo stesso modo su dati nuovi: una parte delle regolarità lessicali apprese sembra specifica del training set. La learning curve conferma questo comportamento, mostrando una forte aderenza ai dati di addestramento e una distanza rispetto alle prestazioni sui dati esterni. 
     \section{Classificatore basato su Support Vector Machine (SVM) lineari
     e informazioni linguistiche non lessicali}
 

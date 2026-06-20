@@ -1,12 +1,12 @@
 # Fdb version 4
-["biber main"] 1781449965.79935 "main.bcf" "main.bbl" "main" 1781619448.22473 0
-  "main.bcf" 1781619447 107554 6db6b754216ca5b798b80d85c7ab9c66 "pdflatex"
+["biber main"] 1781449965.79935 "main.bcf" "main.bbl" "main" 1781623584.08102 0
+  "main.bcf" 1781623583 107554 6db6b754216ca5b798b80d85c7ab9c66 "pdflatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1781619441.64155 "c:/Users/USER/Desktop/Uni/LCII/Progetto/Progetto-LCII/report_latex/main.tex" "main.pdf" "main" 1781619448.22586 0
-  "c:/Users/USER/Desktop/Uni/LCII/Progetto/Progetto-LCII/report_latex/main.tex" 1781619437 22761 156bb73bb73f88590cc43371c249d077 ""
+["pdflatex"] 1781623578.7696 "c:/Users/USER/Desktop/Uni/LCII/Progetto/Progetto-LCII/report_latex/main.tex" "main.pdf" "main" 1781623584.0824 0
+  "c:/Users/USER/Desktop/Uni/LCII/Progetto/Progetto-LCII/report_latex/main.tex" 1781623567 25968 2e968150db875d4ecdffef4dcebd37d0 ""
   "c:/texlive/2026/texmf-dist/fonts/enc/dvips/base/8r.enc" 1779190698 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "c:/texlive/2026/texmf-dist/fonts/enc/dvips/libertine/lbtn_76gpa5.enc" 1779192196 2933 9ad527ce78d7c5fa0a642dead095f172 ""
   "c:/texlive/2026/texmf-dist/fonts/enc/dvips/libertine/lbtn_7grukw.enc" 1779192196 2934 a4a9158faed2e9e89c771b4e3b7fc12f ""
@@ -306,15 +306,16 @@
   "c:/texlive/2026/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1779195979 5619402 ad1310ccf7f36101ef3e8f014a173c46 ""
   "c:/texlive/2026/texmf-var/web2c/pdftex/pdflatex.fmt" 1779196292 3651065 04d97a6af36b4ade2f3eac635b71192c ""
   "c:/texlive/2026/texmf.cnf" 1779195939 713 e69b156964470283e0530f5060668171 ""
-  "main.aux" 1781619447 7172 f87961995e8e1127029dcaada82f3413 "pdflatex"
+  "main.aux" 1781623583 8091 30168c7bd43df1165c4810f5f3eb4bf1 "pdflatex"
   "main.bbl" 1781449969 486 76d65a242ec496c9b4361af646ff12cb "biber main"
-  "main.run.xml" 1781619447 2360 f7a01223c7dd3204c624b89ce171fad1 "pdflatex"
-  "main.tex" 1781619437 22761 156bb73bb73f88590cc43371c249d077 ""
-  "main.toc" 1781619447 972 342792eeb172c4edbb1ad4c5ee45cf99 "pdflatex"
+  "main.run.xml" 1781623583 2360 f7a01223c7dd3204c624b89ce171fad1 "pdflatex"
+  "main.tex" 1781623567 25968 2e968150db875d4ecdffef4dcebd37d0 ""
+  "main.toc" 1781623583 1058 0fba8c513264f3f4d124973d855746f7 "pdflatex"
   "packages/sleek-listings.sty" 1781252742 4079 8795fb131771e279ba96bde28011c22f ""
   "packages/sleek-theorems.sty" 1781252742 3832 31696cf1d59747146a2f53eb2bb6cd9f ""
   "packages/sleek-title.sty" 1781252742 4144 4383b09b9327b196dcd25674bd37248d ""
   "packages/sleek.sty" 1781252742 6200 0477d0d035ae85ebf06a4b0f4895eb54 ""
+  "resources/images/svc_linear_word1_hinge_loss_learning_curve.png" 1781622347 173453 be51bd9d53931402318433f93669a65a ""
   "resources/pdf/logo.pdf" 1781252916 45238 ddbba6463e69b58853dcb524550ab648 ""
   (generated)
   "main.aux"

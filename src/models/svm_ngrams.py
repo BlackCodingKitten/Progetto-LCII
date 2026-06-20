@@ -1,588 +1,223 @@
-import os
+from pathlib import Path
 import json
-import pandas as pd
+
 import matplotlib.pyplot as plt
-
-from sklearn.base import BaseEstimator, TransformerMixin
+import pandas as pd
 from sklearn.feature_extraction import DictVectorizer
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-
-from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import FunctionTransformer, StandardScaler
+from sklearn.svm import SVC
 
 
-# ============================================================
-# CONFIGURAZIONE
-# ============================================================
-
-DATASET_PATH = "data/features/train_ngram_representations.csv"
-
-RESULTS_DIR = "results"
-PLOTS_DIR = os.path.join(RESULTS_DIR, "plots_model_by_model")
-
-EXCEL_OUTPUT = os.path.join(
-    RESULTS_DIR,
-    "svc_linear_test_only_all_models_metrics.xlsx"
-)
-
-CSV_OUTPUT = os.path.join(
-    RESULTS_DIR,
-    "svc_linear_test_only_all_models_metrics.csv"
-)
+# =========================
+# Configurazione generale
+# =========================
+DATASET_PATH = Path("data/features/train_ngram_representations.csv")
+RESULTS_DIR = Path("results")
+PLOTS_DIR = RESULTS_DIR / "plots_model_by_model"
+EXCEL_OUTPUT = RESULTS_DIR / "svc_linear_test_only_all_models_metrics.xlsx"
+CSV_OUTPUT = RESULTS_DIR / "svc_linear_test_only_all_models_metrics.csv"
+C_VALUES = [0.001, 0.01, 0.1, 1, 10, 100]
+METRICS = {"accuracy": "accuracy", "f1_macro": "f1_macro", "roc_auc": "roc_auc"}
 
 
-# ============================================================
-# VETTORIZZATORE JSON -> MATRICE NUMERICA
-# ============================================================
+# =========================
+# Da JSON n-grammi a dizionari di feature
+# =========================
+def json_cell_to_items(cell):
+    """Converte una cella JSON in lista; celle vuote/NaN diventano liste vuote."""
+    return json.loads(cell) if isinstance(cell, str) and cell else []
 
-class NgramJSONVectorizer(BaseEstimator, TransformerMixin):
+
+def rows_to_feature_dicts(X, columns):
     """
-    Converte le colonne JSON degli n-grammi in una matrice numerica.
-
-    Ogni cella degli n-grammi contiene una lista JSON del tipo:
-
-    [
-        {"ngram": "gatto", "freq": 0.333},
-        {"ngram": "mangia", "freq": 0.333}
-    ]
-
-    Questa classe trasforma ogni documento in un dizionario:
-
-    {
-        "word_1grams::gatto": 0.333,
-        "word_1grams::mangia": 0.333
-    }
-
-    Poi DictVectorizer converte questi dizionari in una matrice sparsa.
+    Trasforma ogni riga del DataFrame in un dizionario numerico.
+    Esempio: {"word_1grams::gatto": 2.0, "word_1grams::mangia": 1.0}
+    DictVectorizer convertirà poi questi dizionari in una matrice sparsa sklearn.
     """
-
-    def __init__(self, ngram_columns):
-        self.ngram_columns = ngram_columns
-
-    def _parse_json_cell(self, cell):
-        if pd.isna(cell):
-            return []
-
-        if cell == "":
-            return []
-
-        return json.loads(cell)
-
-    def _row_to_dict(self, row):
-        features = {}
-
-        for column in self.ngram_columns:
-            ngrams = self._parse_json_cell(row[column])
-
-            for item in ngrams:
-                feature_name = f"{column}::{item['ngram']}"
-                features[feature_name] = float(item["freq"])
-
-        return features
-
-    def _dataframe_to_dicts(self, X):
-        feature_dicts = []
-
-        for _, row in X.iterrows():
-            feature_dict = self._row_to_dict(row)
-            feature_dicts.append(feature_dict)
-
-        return feature_dicts
-
-    def fit(self, X, y=None):
-        self.vectorizer_ = DictVectorizer(sparse=True)
-        feature_dicts = self._dataframe_to_dicts(X)
-        self.vectorizer_.fit(feature_dicts)
-        return self
-
-    def transform(self, X):
-        feature_dicts = self._dataframe_to_dicts(X)
-        return self.vectorizer_.transform(feature_dicts)
-
-    def get_feature_names_out(self):
-        return self.vectorizer_.get_feature_names_out()
-
-
-# ============================================================
-# CARICAMENTO DATASET
-# ============================================================
-
-def load_dataset(path):
-    dataframe = pd.read_csv(path)
-
-    if "label" not in dataframe.columns:
-        raise ValueError(f"Manca la colonna 'label' nel file: {path}")
-
-    X = dataframe.drop(columns=["label"])
-    y = dataframe["label"].astype(int)
-
-    return X, y
-
-
-# ============================================================
-# RAPPRESENTAZIONI N-GRAMMI
-# ============================================================
-
-def get_ngram_representations():
     return [
         {
-            "name": "char_2grams",
-            "columns": ["char_2grams"]
-        },
-        {
-            "name": "char_3grams",
-            "columns": ["char_3grams"]
-        },
-        {
-            "name": "char_4grams",
-            "columns": ["char_4grams"]
-        },
-        {
-            "name": "char_2_3_4grams",
-            "columns": ["char_2grams", "char_3grams", "char_4grams"]
-        },
-
-        {
-            "name": "word_1grams",
-            "columns": ["word_1grams"]
-        },
-        {
-            "name": "word_2grams",
-            "columns": ["word_2grams"]
-        },
-        {
-            "name": "word_3grams",
-            "columns": ["word_3grams"]
-        },
-        {
-            "name": "word_4grams",
-            "columns": ["word_4grams"]
-        },
-        {
-            "name": "word_1_2_3_4grams",
-            "columns": [
-                "word_1grams",
-                "word_2grams",
-                "word_3grams",
-                "word_4grams"
-            ]
-        },
-
-        {
-            "name": "lemma_1grams",
-            "columns": ["lemma_1grams"]
-        },
-        {
-            "name": "lemma_2grams",
-            "columns": ["lemma_2grams"]
-        },
-        {
-            "name": "lemma_3grams",
-            "columns": ["lemma_3grams"]
-        },
-        {
-            "name": "lemma_4grams",
-            "columns": ["lemma_4grams"]
-        },
-        {
-            "name": "lemma_1_2_3_4grams",
-            "columns": [
-                "lemma_1grams",
-                "lemma_2grams",
-                "lemma_3grams",
-                "lemma_4grams"
-            ]
-        },
-
-        {
-            "name": "pos_1grams",
-            "columns": ["pos_1grams"]
-        },
-        {
-            "name": "pos_2grams",
-            "columns": ["pos_2grams"]
-        },
-        {
-            "name": "pos_3grams",
-            "columns": ["pos_3grams"]
-        },
-        {
-            "name": "pos_4grams",
-            "columns": ["pos_4grams"]
-        },
-        {
-            "name": "pos_1_2_3_4grams",
-            "columns": [
-                "pos_1grams",
-                "pos_2grams",
-                "pos_3grams",
-                "pos_4grams"
-            ]
-        },
-
-        {
-            "name": "all_ngrams",
-            "columns": [
-                "char_2grams",
-                "char_3grams",
-                "char_4grams",
-                "word_1grams",
-                "word_2grams",
-                "word_3grams",
-                "word_4grams",
-                "lemma_1grams",
-                "lemma_2grams",
-                "lemma_3grams",
-                "lemma_4grams",
-                "pos_1grams",
-                "pos_2grams",
-                "pos_3grams",
-                "pos_4grams"
-            ]
+            f"{col}::{item['ngram']}": float(item["freq"])
+            for col in columns
+            for item in json_cell_to_items(row[col])
         }
+        for _, row in X.iterrows()
     ]
 
 
-# ============================================================
-# PIPELINE SVC LINEARE
-# ============================================================
+# =========================
+# Dataset e rappresentazioni
+# =========================
+def load_dataset(path):
+    """Carica il CSV e separa feature X e target y."""
+    df = pd.read_csv(path)
+    if "label" not in df:
+        raise ValueError(f"Manca la colonna 'label' nel file: {path}")
+    return df.drop(columns="label"), df["label"].astype(int)
 
-def build_pipeline(ngram_columns):
+
+def representation(name, columns):
+    """Piccolo helper per rendere leggibile la lista delle rappresentazioni."""
+    return {"name": name, "columns": columns}
+
+
+def get_ngram_representations():
+    """Restituisce le stesse rappresentazioni valutate nel codice originale."""
+    reps = [representation(f"char_{n}grams", [f"char_{n}grams"]) for n in range(2, 5)]
+    reps += [representation("char_2_3_4grams", [f"char_{n}grams" for n in range(2, 5)])]
+
+    for prefix in ["word", "lemma", "pos"]:
+        reps += [representation(f"{prefix}_{n}grams", [f"{prefix}_{n}grams"]) for n in range(1, 5)]
+        reps += [representation(f"{prefix}_1_2_3_4grams", [f"{prefix}_{n}grams" for n in range(1, 5)])]
+
+    all_columns = [f"char_{n}grams" for n in range(2, 5)] + [
+        f"{prefix}_{n}grams" for prefix in ["word", "lemma", "pos"] for n in range(1, 5)
+    ]
+    return reps + [representation("all_ngrams", all_columns)]
+
+
+# =========================
+# Modello
+# =========================
+def build_pipeline(columns):
     """
-    Pipeline:
-
-    1. NgramJSONVectorizer
-    2. StandardScaler
-    3. SVC(kernel='linear')
-
-    StandardScaler usa with_mean=False perché la matrice è sparsa.
+    Pipeline sklearn compatta:
+    1) FunctionTransformer: converte JSON -> lista di dizionari;
+    2) DictVectorizer: dizionari -> matrice sparsa;
+    3) StandardScaler(with_mean=False): scaling compatibile con matrici sparse;
+    4) SVC lineare.
     """
-
     return Pipeline([
-        (
-            "vectorizer",
-            NgramJSONVectorizer(ngram_columns=ngram_columns)
-        ),
-        (
-            "scaler",
-            StandardScaler(with_mean=False)
-        ),
-        (
-            "svm",
-            SVC(kernel="linear")
-        )
+        ("json_to_dicts", FunctionTransformer(rows_to_feature_dicts, kw_args={"columns": columns}, validate=False)),
+        ("vectorizer", DictVectorizer(sparse=True)),
+        ("scaler", StandardScaler(with_mean=False)),
+        ("svm", SVC(kernel="linear")),
     ])
 
 
-# ============================================================
-# PLOT PER OGNI MODELLO
-# ============================================================
+# =========================
+# Output grafici e tabelle
+# =========================
+def fold_values(row, metric):
+    """Estrae i valori dei 5 fold per una metrica da cv_results_."""
+    return [row[f"split{i}_test_{metric}"] for i in range(5)]
 
-def plot_single_model_metrics(
-    model_id,
-    representation_name,
-    c_value,
-    fold_accuracy,
-    fold_f1_macro,
-    fold_roc_auc,
-    output_dir
-):
-    """
-    Genera un plot per un singolo modello.
 
-    Il plot mostra le tre metriche nei 5 fold:
-
-    - Accuracy
-    - F1 macro
-    - ROC-AUC
-    """
-
-    os.makedirs(output_dir, exist_ok=True)
-
-    folds = [1, 2, 3, 4, 5]
-
+def plot_model(model_id, representation_name, c_value, row):
+    """Salva il grafico Accuracy/F1/ROC-AUC sui 5 fold per un singolo modello."""
+    folds = range(1, 6)
     plt.figure(figsize=(10, 6))
-
-    plt.plot(
-        folds,
-        fold_accuracy,
-        marker="o",
-        linestyle="-",
-        label="Accuracy"
-    )
-
-    plt.plot(
-        folds,
-        fold_f1_macro,
-        marker="o",
-        linestyle="-",
-        label="F1 macro"
-    )
-
-    plt.plot(
-        folds,
-        fold_roc_auc,
-        marker="o",
-        linestyle="-",
-        label="ROC-AUC"
-    )
+    for metric, label in [("accuracy", "Accuracy"), ("f1_macro", "F1 macro"), ("roc_auc", "ROC-AUC")]:
+        plt.plot(folds, fold_values(row, metric), marker="o", linestyle="-", label=label)
 
     plt.xlabel("Fold")
     plt.ylabel("Score")
     plt.ylim(0.0, 1.0)
-    plt.xticks(folds)
-
-    plt.title(
-        f"{model_id} - {representation_name} - SVC linear - C={c_value}"
-    )
-
+    plt.xticks(list(folds))
+    plt.title(f"{model_id} - {representation_name} - SVC linear - C={c_value}")
     plt.grid(True, linestyle="--", alpha=0.5)
     plt.legend(loc="best")
     plt.tight_layout()
 
-    filename = f"{model_id}_{representation_name}_C_{c_value}.png"
-    filename = filename.replace("/", "_").replace(" ", "_")
-
-    output_path = os.path.join(output_dir, filename)
-
+    filename = f"{model_id}_{representation_name}_C_{c_value}.png".replace("/", "_").replace(" ", "_")
+    output_path = PLOTS_DIR / filename
     plt.savefig(output_path, dpi=300)
     plt.close()
+    return str(output_path)
 
-    return output_path
+
+def result_row(model_id, representation_name, columns, c_value, row, plot_file):
+    """Costruisce una riga della tabella finale, includendo medie/std e valori per fold."""
+    base = {
+        "model_id": model_id,
+        "classifier": "SVC(kernel='linear')",
+        "representation": representation_name,
+        "columns": ", ".join(columns),
+        "C": c_value,
+    }
+    metrics = {
+        f"{metric}_{stat}": row[f"{stat}_test_{metric}"]
+        for metric in METRICS
+        for stat in ["mean", "std"]
+    }
+    folds = {
+        f"{metric}_fold_{i + 1}": row[f"split{i}_test_{metric}"]
+        for metric in METRICS
+        for i in range(5)
+    }
+    return {**base, **metrics, **folds, "plot_file": plot_file}
 
 
-# ============================================================
-# MAIN
-# ============================================================
+def save_outputs(df):
+    """Salva CSV, Excel e legenda dei campi principali."""
+    df.to_csv(CSV_OUTPUT, index=False, encoding="utf-8")
 
+    legend = pd.DataFrame([
+        ("model_id", "Identificativo progressivo del modello valutato"),
+        ("representation", "Tipo di rappresentazione n-grammi usata"),
+        ("C", "Parametro di regolarizzazione di SVC(kernel='linear')"),
+        ("accuracy_mean", "Accuracy media sui 5 fold"),
+        ("accuracy_std", "Deviazione standard dell'Accuracy sui 5 fold"),
+        ("f1_macro_mean", "F1 macro media sui 5 fold"),
+        ("f1_macro_std", "Deviazione standard della F1 macro sui 5 fold"),
+        ("roc_auc_mean", "ROC-AUC media sui 5 fold"),
+        ("roc_auc_std", "Deviazione standard della ROC-AUC sui 5 fold"),
+        ("plot_file", "Percorso del plot associato al modello"),
+    ], columns=["campo", "significato"])
+
+    with pd.ExcelWriter(EXCEL_OUTPUT, engine="openpyxl") as writer:
+        df.to_excel(writer, sheet_name="all_models", index=False)
+        legend.to_excel(writer, sheet_name="legend", index=False)
+
+
+# =========================
+# Esecuzione principale
+# =========================
 def main():
-    os.makedirs(RESULTS_DIR, exist_ok=True)
-    os.makedirs(PLOTS_DIR, exist_ok=True)
+    RESULTS_DIR.mkdir(exist_ok=True)
+    PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
     X, y = load_dataset(DATASET_PATH)
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    rows, model_counter = [], 1
 
-    representations = get_ngram_representations()
-
-    c_values = [0.001, 0.01, 0.1, 1, 10, 100]
-
-    cv = StratifiedKFold(
-        n_splits=5,
-        shuffle=True,
-        random_state=42
-    )
-
-    scoring = {
-        "accuracy": "accuracy",
-        "f1_macro": "f1_macro",
-        "roc_auc": "roc_auc"
-    }
-
-    all_model_rows = []
-
-    model_counter = 1
-
-    print("\n=====CROSS-VALIDATION Training Set =====")
+    print("\n===== CROSS-VALIDATION Training Set =====")
     print(f"Dataset usato: {DATASET_PATH}")
 
-    for representation in representations:
-        representation_name = representation["name"]
-        ngram_columns = representation["columns"]
+    for rep in get_ngram_representations():
+        print(f"\nRappresentazione: {rep['name']} | Classificatore: SVC(kernel='linear')")
 
-        print("\n======================================")
-        print(f"Rappresentazione: {representation_name}")
-        print("Classificatore: SVC(kernel='linear')")
-        print("======================================")
-
-        pipeline = build_pipeline(ngram_columns)
-
-        param_grid = {
-            "svm__C": c_values
-        }
-
-        grid_search = GridSearchCV(
-            estimator=pipeline,
-            param_grid=param_grid,
-            scoring=scoring,
+        search = GridSearchCV(
+            build_pipeline(rep["columns"]),
+            {"svm__C": C_VALUES},
+            scoring=METRICS,
             refit=False,
             cv=cv,
             n_jobs=1,
             return_train_score=False,
             verbose=1,
-            error_score="raise"
-        )
+            error_score="raise",
+        ).fit(X, y)
 
-        grid_search.fit(X, y)
-
-        results = pd.DataFrame(grid_search.cv_results_)
-
-        results["C"] = results["param_svm__C"].astype(float)
-        results = results.sort_values(by="C")
+        results = pd.DataFrame(search.cv_results_).assign(C=lambda d: d["param_svm__C"].astype(float)).sort_values("C")
 
         for _, row in results.iterrows():
             model_id = f"model_{model_counter}"
             model_counter += 1
-
             c_value = float(row["C"])
+            plot_file = plot_model(model_id, rep["name"], c_value, row)
+            rows.append(result_row(model_id, rep["name"], rep["columns"], c_value, row, plot_file))
 
-            fold_accuracy = [
-                row["split0_test_accuracy"],
-                row["split1_test_accuracy"],
-                row["split2_test_accuracy"],
-                row["split3_test_accuracy"],
-                row["split4_test_accuracy"]
-            ]
-
-            fold_f1_macro = [
-                row["split0_test_f1_macro"],
-                row["split1_test_f1_macro"],
-                row["split2_test_f1_macro"],
-                row["split3_test_f1_macro"],
-                row["split4_test_f1_macro"]
-            ]
-
-            fold_roc_auc = [
-                row["split0_test_roc_auc"],
-                row["split1_test_roc_auc"],
-                row["split2_test_roc_auc"],
-                row["split3_test_roc_auc"],
-                row["split4_test_roc_auc"]
-            ]
-
-            plot_file = plot_single_model_metrics(
-                model_id=model_id,
-                representation_name=representation_name,
-                c_value=c_value,
-                fold_accuracy=fold_accuracy,
-                fold_f1_macro=fold_f1_macro,
-                fold_roc_auc=fold_roc_auc,
-                output_dir=PLOTS_DIR
-            )
-
-            model_row = {
-                "model_id": model_id,
-                "classifier": "SVC(kernel='linear')",
-                "representation": representation_name,
-                "columns": ", ".join(ngram_columns),
-                "C": c_value,
-
-                "accuracy_mean": row["mean_test_accuracy"],
-                "accuracy_std": row["std_test_accuracy"],
-                "accuracy_fold_1": row["split0_test_accuracy"],
-                "accuracy_fold_2": row["split1_test_accuracy"],
-                "accuracy_fold_3": row["split2_test_accuracy"],
-                "accuracy_fold_4": row["split3_test_accuracy"],
-                "accuracy_fold_5": row["split4_test_accuracy"],
-
-                "f1_macro_mean": row["mean_test_f1_macro"],
-                "f1_macro_std": row["std_test_f1_macro"],
-                "f1_macro_fold_1": row["split0_test_f1_macro"],
-                "f1_macro_fold_2": row["split1_test_f1_macro"],
-                "f1_macro_fold_3": row["split2_test_f1_macro"],
-                "f1_macro_fold_4": row["split3_test_f1_macro"],
-                "f1_macro_fold_5": row["split4_test_f1_macro"],
-
-                "roc_auc_mean": row["mean_test_roc_auc"],
-                "roc_auc_std": row["std_test_roc_auc"],
-                "roc_auc_fold_1": row["split0_test_roc_auc"],
-                "roc_auc_fold_2": row["split1_test_roc_auc"],
-                "roc_auc_fold_3": row["split2_test_roc_auc"],
-                "roc_auc_fold_4": row["split3_test_roc_auc"],
-                "roc_auc_fold_5": row["split4_test_roc_auc"],
-
-                "plot_file": plot_file
-            }
-
-            all_model_rows.append(model_row)
-
-    all_models_df = pd.DataFrame(all_model_rows)
-
-    all_models_df = all_models_df.sort_values(
-        by="f1_macro_mean",
-        ascending=False
-    )
-
-    all_models_df.to_csv(
-        CSV_OUTPUT,
-        index=False,
-        encoding="utf-8"
-    )
-
-    with pd.ExcelWriter(EXCEL_OUTPUT, engine="openpyxl") as writer:
-        all_models_df.to_excel(
-            writer,
-            sheet_name="all_models",
-            index=False
-        )
-
-        explanation_df = pd.DataFrame([
-            {
-                "campo": "model_id",
-                "significato": "Identificativo progressivo del modello valutato"
-            },
-            {
-                "campo": "representation",
-                "significato": "Tipo di rappresentazione n-grammi usata"
-            },
-            {
-                "campo": "C",
-                "significato": "Parametro di regolarizzazione di SVC(kernel='linear')"
-            },
-            {
-                "campo": "accuracy_mean",
-                "significato": "Accuracy media sui 5 fold"
-            },
-            {
-                "campo": "accuracy_std",
-                "significato": "Deviazione standard dell'Accuracy sui 5 fold"
-            },
-            {
-                "campo": "f1_macro_mean",
-                "significato": "F1 macro media sui 5 fold"
-            },
-            {
-                "campo": "f1_macro_std",
-                "significato": "Deviazione standard della F1 macro sui 5 fold"
-            },
-            {
-                "campo": "roc_auc_mean",
-                "significato": "ROC-AUC media sui 5 fold"
-            },
-            {
-                "campo": "roc_auc_std",
-                "significato": "Deviazione standard della ROC-AUC sui 5 fold"
-            },
-            {
-                "campo": "plot_file",
-                "significato": "Percorso del plot associato al modello"
-            }
-        ])
-
-        explanation_df.to_excel(
-            writer,
-            sheet_name="legend",
-            index=False
-        )
+    df = pd.DataFrame(rows).sort_values("f1_macro_mean", ascending=False)
+    save_outputs(df)
 
     print("\n===== OPERAZIONE COMPLETATA =====")
     print(f"Tabella Excel salvata in: {EXCEL_OUTPUT}")
     print(f"Tabella CSV salvata in: {CSV_OUTPUT}")
     print(f"Plot salvati in: {PLOTS_DIR}")
-
     print("\nPrimi modelli ordinati per F1 macro media:")
-    print(
-        all_models_df[
-            [
-                "model_id",
-                "representation",
-                "C",
-                "accuracy_mean",
-                "f1_macro_mean",
-                "roc_auc_mean",
-                "plot_file"
-            ]
-        ].head(20)
-    )
+    print(df[["model_id", "representation", "C", "accuracy_mean", "f1_macro_mean", "roc_auc_mean", "plot_file"]].head(20))
 
 
 if __name__ == "__main__":

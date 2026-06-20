@@ -683,6 +683,11 @@ INPUT c:/texlive/2026/texmf-dist/fonts/vf/public/libertine/LinLibertineTB-tlf-t1
 INPUT c:/texlive/2026/texmf-dist/fonts/tfm/public/libertine/LinLibertineTB-tlf-t1--base.tfm
 INPUT c:/texlive/2026/texmf-dist/fonts/vf/public/libertine/LinLibertineT-tlf-t1.vf
 INPUT c:/texlive/2026/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1--base.tfm
+INPUT ./resources/images/svc_linear_word1_hinge_loss_learning_curve.png
+INPUT ./resources/images/svc_linear_word1_hinge_loss_learning_curve.png
+INPUT ./resources/images/svc_linear_word1_hinge_loss_learning_curve.png
+INPUT ./resources/images/svc_linear_word1_hinge_loss_learning_curve.png
+INPUT ./resources/images/svc_linear_word1_hinge_loss_learning_curve.png
 INPUT main.aux
 INPUT main.run.xml
 OUTPUT main.run.xml
