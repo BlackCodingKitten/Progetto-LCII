@@ -10,9 +10,6 @@ from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from sklearn.svm import SVC
 
 
-# =========================
-# Configurazione generale
-# =========================
 DATASET_PATH = Path("data/features/train_ngram_representations.csv")
 RESULTS_DIR = Path("results")
 PLOTS_DIR = RESULTS_DIR / "plots_model_by_model"
@@ -33,7 +30,6 @@ def json_cell_to_items(cell):
 def rows_to_feature_dicts(X, columns):
     """
     Trasforma ogni riga del DataFrame in un dizionario numerico.
-    Esempio: {"word_1grams::gatto": 2.0, "word_1grams::mangia": 1.0}
     DictVectorizer convertirà poi questi dizionari in una matrice sparsa sklearn.
     """
     return [
@@ -46,11 +42,9 @@ def rows_to_feature_dicts(X, columns):
     ]
 
 
-# =========================
-# Dataset e rappresentazioni
-# =========================
+# =============== Dataset e rappresentazioni ==========
 def load_dataset(path):
-    """Carica il CSV e separa feature X e target y."""
+    """Carica il CSV e separa feature X e target Y."""
     df = pd.read_csv(path)
     if "label" not in df:
         raise ValueError(f"Manca la colonna 'label' nel file: {path}")
@@ -77,9 +71,7 @@ def get_ngram_representations():
     return reps + [representation("all_ngrams", all_columns)]
 
 
-# =========================
-# Modello
-# =========================
+# ======= Modello =========
 def build_pipeline(columns):
     """
     Pipeline sklearn compatta:
@@ -96,9 +88,7 @@ def build_pipeline(columns):
     ])
 
 
-# =========================
-# Output grafici e tabelle
-# =========================
+# ====  Output grafici e tabelle =====
 def fold_values(row, metric):
     """Estrae i valori dei 5 fold per una metrica da cv_results_."""
     return [row[f"split{i}_test_{metric}"] for i in range(5)]
@@ -171,9 +161,6 @@ def save_outputs(df):
         legend.to_excel(writer, sheet_name="legend", index=False)
 
 
-# =========================
-# Esecuzione principale
-# =========================
 def main():
     RESULTS_DIR.mkdir(exist_ok=True)
     PLOTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -182,11 +169,11 @@ def main():
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
     rows, model_counter = [], 1
 
-    print("\n===== CROSS-VALIDATION Training Set =====")
-    print(f"Dataset usato: {DATASET_PATH}")
+    # print("\n===== CROSS-VALIDATION Training Set =====")
+    # print(f"Dataset usato: {DATASET_PATH}")
 
     for rep in get_ngram_representations():
-        print(f"\nRappresentazione: {rep['name']} | Classificatore: SVC(kernel='linear')")
+        # print(f"\nRappresentazione: {rep['name']} | Classificatore: SVC(kernel='linear')")
 
         search = GridSearchCV(
             build_pipeline(rep["columns"]),
@@ -212,12 +199,11 @@ def main():
     df = pd.DataFrame(rows).sort_values("f1_macro_mean", ascending=False)
     save_outputs(df)
 
-    print("\n===== OPERAZIONE COMPLETATA =====")
-    print(f"Tabella Excel salvata in: {EXCEL_OUTPUT}")
-    print(f"Tabella CSV salvata in: {CSV_OUTPUT}")
-    print(f"Plot salvati in: {PLOTS_DIR}")
-    print("\nPrimi modelli ordinati per F1 macro media:")
-    print(df[["model_id", "representation", "C", "accuracy_mean", "f1_macro_mean", "roc_auc_mean", "plot_file"]].head(20))
+    # print(f"DEBUG: Tabella Excel salvata in: {EXCEL_OUTPUT}")
+    # print(f"DEBUG: Tabella CSV salvata in: {CSV_OUTPUT}")
+    # print(f"DEBUG: Plot salvati in: {PLOTS_DIR}")
+    # print("\nDEBUG: Primi modelli ordinati per F1 macro media:")
+    # print(df[["model_id", "representation", "C", "accuracy_mean", "f1_macro_mean", "roc_auc_mean", "plot_file"]].head(20))
 
 
 if __name__ == "__main__":

@@ -20,11 +20,6 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import StratifiedShuffleSplit
 
-
-# ============================================================
-# CONFIGURAZIONE
-# ============================================================
-
 TRAIN_PATH = Path("data/features/train_ngram_representations.csv")
 VALIDATION_PATH = Path("data/features/validation_ngram_representations.csv")
 TEST_PATH = Path("data/features/test_ngram_representations.csv")
@@ -39,14 +34,13 @@ OUTPUT_MODEL = MODELS_DIR / "svc_linear_word1_C_0_001_final_model.joblib"
 OUTPUT_METRICS_PLOT = PLOTS_DIR / "svc_linear_word1_train_validation_test_metrics.png"
 OUTPUT_LOSS_PLOT = PLOTS_DIR / "svc_linear_word1_hinge_loss_learning_curve.png"
 
+# === Dalla tabella in results ho preso il modello migliore con c più piccolo, visto che alcuni modelli erano equivalenti
 BEST_REPRESENTATION_NAME = "word_1grams"
 BEST_NGRAM_COLUMNS = ["word_1grams"]
 BEST_C = 0.001
 
 
-# ============================================================
-# LETTURA JSON E VETTORIZZAZIONE
-# ============================================================
+# ========= LETTURA JSON E VETTORIZZAZIONE ===========================
 
 def parse_cell(cell):
     """Converte una cella JSON in lista; celle vuote o NaN diventano liste vuote."""
@@ -56,12 +50,6 @@ def parse_cell(cell):
 def dataframe_to_feature_dicts(X, columns):
     """
     Converte ogni riga del DataFrame in un dizionario di feature.
-
-    Esempio:
-    [{"ngram": "cane", "freq": 2}]
-    diventa:
-    {"word_1grams::cane": 2.0}
-
     DictVectorizer trasforma poi questi dizionari in una matrice sparsa sklearn.
     """
     return [
@@ -94,9 +82,7 @@ def build_model():
     )
 
 
-# ============================================================
-# DATI, METRICHE E SALVATAGGI
-# ============================================================
+# ========= DATI, METRICHE E SALVATAGGI =============
 
 def load_dataset(path, selected_columns=BEST_NGRAM_COLUMNS):
     """Carica un CSV e restituisce solo le colonne n-grammi selezionate e la label."""
@@ -126,14 +112,14 @@ def evaluate(model, X, y, split):
         "confusion_matrix": confusion_matrix(y, y_pred).tolist(),
     }
 
-    print(f"\n===== RISULTATI SU {split.upper()} =====")
-    print(f"Accuracy: {scores['accuracy']:.4f}")
-    print(f"F1 macro: {scores['f1_macro']:.4f}")
-    print(f"ROC-AUC:  {scores['roc_auc']:.4f}")
-    print("\nClassification report:")
-    print(classification_report(y, y_pred, digits=4))
-    print("Confusion matrix:")
-    print(np.array(scores["confusion_matrix"]))
+    #print(f"\n===== RISULTATI SU {split.upper()} =====")
+    #print(f"Accuracy: {scores['accuracy']:.4f}")
+    #print(f"F1 macro: {scores['f1_macro']:.4f}")
+    #print(f"ROC-AUC:  {scores['roc_auc']:.4f}")
+    #print("\nClassification report:")
+    #print(classification_report(y, y_pred, digits=4))
+    #print("Confusion matrix:")
+    #print(np.array(scores["confusion_matrix"]))
 
     return scores
 
@@ -146,15 +132,13 @@ def save_metrics(results):
     df.to_csv(OUTPUT_METRICS_CSV, index=False, encoding="utf-8")
     df.to_excel(OUTPUT_METRICS_XLSX, index=False)
 
-    print(f"\nMetriche CSV salvate in: {OUTPUT_METRICS_CSV}")
-    print(f"Metriche XLSX salvate in: {OUTPUT_METRICS_XLSX}")
+    #print(f"\nMetriche CSV salvate in: {OUTPUT_METRICS_CSV}")
+    #print(f"Metriche XLSX salvate in: {OUTPUT_METRICS_XLSX}")
 
     return df
 
 
-# ============================================================
-# GRAFICI
-# ============================================================
+# ===GRAFICI ==========================
 
 def plot_metrics(results_df):
     """Disegna un pannello per train, validation e test con le tre metriche principali."""
@@ -188,7 +172,7 @@ def plot_metrics(results_df):
     plt.savefig(OUTPUT_METRICS_PLOT, dpi=300)
     plt.close()
 
-    print(f"Grafico metriche salvato in: {OUTPUT_METRICS_PLOT}")
+    #print(f"Grafico metriche salvato in: {OUTPUT_METRICS_PLOT}")
 
 
 def binary_hinge_loss(y_true, scores):
@@ -222,7 +206,7 @@ def plot_hinge_loss_curve(X_train, y_train, X_val, y_val, X_test, y_test):
     losses = {"Training loss": [], "Validation loss": [], "Test loss": []}
 
     for size in train_sizes:
-        print(f"\nCalcolo hinge loss con {int(size * 100)}% del training set...")
+        #print(f"\nCalcolo hinge loss con {int(size * 100)}% del training set...")
 
         X_sub, y_sub = subset_or_full(X_train, y_train, size)
         model = build_model().fit(X_sub, y_sub)
@@ -246,12 +230,8 @@ def plot_hinge_loss_curve(X_train, y_train, X_val, y_val, X_test, y_test):
     plt.savefig(OUTPUT_LOSS_PLOT, dpi=300)
     plt.close()
 
-    print(f"Grafico hinge loss salvato in: {OUTPUT_LOSS_PLOT}")
+    #print(f"Grafico hinge loss salvato in: {OUTPUT_LOSS_PLOT}")
 
-
-# ============================================================
-# MAIN
-# ============================================================
 
 def main():
     """Esegue l'intera procedura finale: training, valutazione, salvataggi e grafici."""
@@ -259,44 +239,44 @@ def main():
     PLOTS_DIR.mkdir(parents=True, exist_ok=True)
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
-    print("\n===== CARICAMENTO DATASET =====")
+    #print("\n===== CARICAMENTO DATASET =====")
     X_train, y_train = load_dataset(TRAIN_PATH)
     X_val, y_val = load_dataset(VALIDATION_PATH)
     X_test, y_test = load_dataset(TEST_PATH)
 
-    print(f"Train:      {len(X_train)} documenti")
-    print(f"Validation: {len(X_val)} documenti")
-    print(f"Test:       {len(X_test)} documenti")
+    #print(f"Train:      {len(X_train)} documenti")
+    #print(f"Validation: {len(X_val)} documenti")
+    #print(f"Test:       {len(X_test)} documenti")
 
-    print("\n===== MODELLO MIGLIORE GIÀ SELEZIONATO =====")
-    print(f"Modello: SVC(kernel='linear')")
-    print(f"Rappresentazione: {BEST_REPRESENTATION_NAME}")
-    print(f"C: {BEST_C}")
+    #print("\n===== MODELLO MIGLIORE GIÀ SELEZIONATO =====")
+    #print(f"Modello: SVC(kernel='linear')")
+    #print(f"Rappresentazione: {BEST_REPRESENTATION_NAME}")
+    #print(f"C: {BEST_C}")
 
-    print("\n===== ADDESTRAMENTO SU TUTTO IL TRAINING SET =====")
+    #print("\n===== ADDESTRAMENTO SU TUTTO IL TRAINING SET =====")
     model = build_model().fit(X_train, y_train)
     joblib.dump(model, OUTPUT_MODEL)
-    print(f"Modello finale salvato in: {OUTPUT_MODEL}")
+    #print(f"Modello finale salvato in: {OUTPUT_MODEL}")
 
-    print("\n===== VALUTAZIONE MODELLO =====")
+    #print("\n===== VALUTAZIONE MODELLO =====")
     results_df = save_metrics([
         evaluate(model, X_train, y_train, "train"),
         evaluate(model, X_val, y_val, "validation"),
         evaluate(model, X_test, y_test, "test"),
     ])
 
-    print("\n===== GRAFICO METRICHE =====")
+    #print("\n===== GRAFICO METRICHE =====")
     plot_metrics(results_df)
 
-    print("\n===== CURVA DI HINGE LOSS =====")
+    #print("\n===== CURVA DI HINGE LOSS =====")
     plot_hinge_loss_curve(X_train, y_train, X_val, y_val, X_test, y_test)
 
-    print("\n===== OPERAZIONE COMPLETATA =====")
-    print(f"Metriche CSV: {OUTPUT_METRICS_CSV}")
-    print(f"Metriche XLSX: {OUTPUT_METRICS_XLSX}")
-    print(f"Grafico metriche: {OUTPUT_METRICS_PLOT}")
-    print(f"Grafico hinge loss: {OUTPUT_LOSS_PLOT}")
-    print(f"Modello finale: {OUTPUT_MODEL}")
+    #print("\n===== OPERAZIONE COMPLETATA =====")
+    #print(f"Metriche CSV: {OUTPUT_METRICS_CSV}")
+    #print(f"Metriche XLSX: {OUTPUT_METRICS_XLSX}")
+    #print(f"Grafico metriche: {OUTPUT_METRICS_PLOT}")
+    #print(f"Grafico hinge loss: {OUTPUT_LOSS_PLOT}")
+    #print(f"Modello finale: {OUTPUT_MODEL}")
 
 
 if __name__ == "__main__":

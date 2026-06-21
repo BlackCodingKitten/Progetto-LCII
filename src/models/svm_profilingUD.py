@@ -37,7 +37,7 @@ X_train = scaler.fit_transform(X_train)
 X_valid = scaler.transform(X_valid)
 X_test  = scaler.transform(X_test)
 
-# ========= MODELLO =========
+# ========================== MODELLO ============
 # SGDClassifier con loss hinge = SVM lineare addestrata con discesa del gradiente
 model = SGDClassifier(loss="hinge", alpha=1e-4, random_state=42)
 
@@ -46,7 +46,7 @@ def hinge_loss(y, score):
     y = np.where(y == 1, 1, -1)
     return np.maximum(0, 1 - y * score).mean()
 
-# ========= TRAINING + CURVA DI LOSS =========
+# ================ TRAINING + CURVA DI LOSS ==============
 losses = []
 
 for epoch in range(1, 51):
@@ -70,7 +70,7 @@ for epoch in range(1, 51):
 losses = pd.DataFrame(losses)
 losses.to_csv(RES / "profilingUD_loss_curve.csv", index=False)
 
-# ========= GRAFICO LOSS =========
+# ================== GRAFICO LOSS ======================
 plt.figure()
 plt.plot(losses["epoch"], losses["train_loss"], label="Train")
 plt.plot(losses["epoch"], losses["valid_loss"], label="Validation")
@@ -83,7 +83,7 @@ plt.tight_layout()
 plt.savefig(RES / "profilingUD_loss_curve.png", dpi=300)
 plt.close()
 
-# ========= VALUTAZIONE =========
+#============= METRICHE DI VALUTAZIONE ======================
 def evaluate(name, X, y):
     pred = model.predict(X)
     score = model.decision_function(X)
@@ -109,7 +109,7 @@ with open(RES / "profilingUD_classification_report.txt", "w", encoding="utf-8") 
     f.write("\n\nTEST\n")
     f.write(classification_report(y_test, test_pred, target_names=le.classes_.astype(str)))
 
-# ========= 5 DOCUMENTI PIÙ INCERTI SUL TEST =========
+# ========== 5 DOCUMENTI PIÙ INCERTI SUL TEST =================
 # Più lo score è vicino a 0, più il modello è incerto
 uncertain = test.copy()
 uncertain["prediction"] = le.inverse_transform(test_pred)
@@ -121,7 +121,7 @@ uncertain.sort_values("uncertainty").head(5).to_csv(
     index=False
 )
 
-# ========= 20 FEATURE PIÙ RILEVANTI =========
+# ============== 20 FEATURE PIÙ RILEVANTI ===========
 # Nella SVM lineare le feature più importanti sono quelle con peso assoluto maggiore
 top20 = pd.DataFrame({
     "feature": features,
@@ -137,10 +137,10 @@ top20.sort_values("abs_weight", ascending=False).head(20).drop(
     index=False
 )
 
-# ========= SALVATAGGIO MODELLO =========
+# ============ SALVATAGGIO MODELLO ================
 joblib.dump(model, RES / "profilingUD_linear_svm.joblib")
 joblib.dump(scaler, RES / "profilingUD_scaler.joblib")
 joblib.dump(le, RES / "profilingUD_label_encoder.joblib")
 
-print(metrics)
-print(f"\nFile salvati in: {RES}")
+##print(metrics)
+##print(f"\nFile salvati in: {RES}")
