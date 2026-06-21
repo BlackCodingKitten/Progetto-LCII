@@ -8,8 +8,8 @@ from gensim.utils import simple_preprocess
 
 # ===================== CONFIGURAZIONE =====================
 
-SQLITE_PATH = "data/features/embedding/non_contestualizzato/itWaC-cbow/modello/itwac128.sqlite"   # file sqlite scaricato
-MODEL_PATH = "data/features/embedding/non_contestualizzato/itWaC-cbow/modello/itWaC-cbow.kv"       # modello gensim generato
+SQLITE_PATH = "data/features/embedding/non_contestualizzato/itWaC-cbow/modello/itwac128.sqlite"
+MODEL_PATH = "data/features/embedding/non_contestualizzato/itWaC-cbow/modello/itWaC-cbow.kv"
 
 INPUT_FILES = {
     "train": "data/subset/train/train_subset.csv",
@@ -30,28 +30,30 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 # ===================== CONVERSIONE SQLITE → MODELLO GENSIM =====================
 
 def sqlite_to_keyedvectors(sqlite_path, model_path):
-    # Se il modello è già stato convertito, lo carica direttamente
+    # Se il modello gensim esiste già, lo carica direttamente
     if Path(model_path).exists():
         print(f"Modello già presente: {model_path}")
         return KeyedVectors.load(model_path)
+
+    # Controlla che il file sqlite esista
+    if not Path(sqlite_path).exists():
+        raise FileNotFoundError(f"File SQLite non trovato: {Path(sqlite_path).resolve()}")
 
     # Connessione al database sqlite
     conn = sqlite3.connect(sqlite_path)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
-    # Recupera automaticamente la prima tabella presente nel database
-    table = cur.execute(
-        "SELECT name FROM sqlite_master WHERE type='table'"
-    ).fetchone()[0]
+    # Recupera automaticamente la prima tabella del database
+    table = cur.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchone()[0]
 
     # Recupera i nomi delle colonne
     cols = [r["name"] for r in cur.execute(f'PRAGMA table_info("{table}")')]
 
-    # Colonna della parola: di solito si chiama "key"
+    # Colonna della parola
     word_col = [c for c in cols if c.lower() in ["key", "word", "token", "term"]][0]
 
-    # Colonne vettoriali: dim0, dim1, dim2, ...
+    # Colonne vettoriali: dim0, dim1, dim2...
     dim_cols = sorted(
         [c for c in cols if c.lower().startswith("dim")],
         key=lambda c: int(c.lower().replace("dim", ""))
@@ -61,10 +63,10 @@ def sqlite_to_keyedvectors(sqlite_path, model_path):
     dim_sql = ", ".join([f'"{c}"' for c in dim_cols])
     query = f'SELECT "{word_col}", {dim_sql} FROM "{table}"'
 
-    # Crea il modello vuoto
+    # Crea il modello gensim vuoto
     model = KeyedVectors(vector_size=len(dim_cols))
 
-    # Legge il database a blocchi, per non caricare tutto insieme in memoria
+    # Legge il database a blocchi
     cur.execute(query)
     while True:
         rows = cur.fetchmany(50000)
@@ -79,7 +81,7 @@ def sqlite_to_keyedvectors(sqlite_path, model_path):
 
     conn.close()
 
-    # Salva il modello gensim
+    # Salva il modello gensim convertito
     Path(model_path).parent.mkdir(parents=True, exist_ok=True)
     model.save(model_path)
 
@@ -87,18 +89,26 @@ def sqlite_to_keyedvectors(sqlite_path, model_path):
     return model
 
 
-# ===================== TESTO → VETTORE =====================
+# ===================== TESTO → VETTORE MEDIA + DEVIAZIONE STANDARD =====================
 
 def testo_to_vec(testo, model):
-    # Tokenizza il testo e prende solo le parole presenti nel modello
-    vectors = [
+    # Estrae gli embedding delle parole presenti nel vocabolario
+    vectors = np.array([
         model[word]
         for word in simple_preprocess(str(testo), deacc=False)
         if word in model
-    ]
+    ])
 
-    # Media dei word embeddings; se nessuna parola è trovata, vettore di zeri
-    return np.mean(vectors, axis=0) if vectors else np.zeros(model.vector_size)
+    # Se nessuna parola è presente nel modello, restituisce un vettore di zeri
+    if len(vectors) == 0:
+        return np.zeros(model.vector_size * 2)
+
+    # Calcola media e deviazione standard degli embedding delle parole
+    mean_vec = vectors.mean(axis=0)
+    std_vec = vectors.std(axis=0)
+
+    # Concatena media e deviazione standard in un unico vettore
+    return np.concatenate([mean_vec, std_vec])
 
 
 # ===================== CREAZIONE FILE CSV PER SVM =====================
@@ -110,7 +120,7 @@ def salva_embedding(split, input_path, model):
     # Crea un vettore indipendente per ogni testo
     X = np.vstack([testo_to_vec(testo, model) for testo in df["text"]])
 
-    # Crea matrice usabile da SVM
+    # Crea la matrice usabile da SVM
     out = pd.DataFrame(X, columns=[f"emb_{i}" for i in range(X.shape[1])])
 
     # Associa ogni vettore alla propria label
@@ -126,10 +136,10 @@ def salva_embedding(split, input_path, model):
 # ===================== MAIN =====================
 
 def main():
-    # 1. Converte sqlite in modello gensim, oppure lo carica se già esiste
+    # Carica o converte il modello itWaC-cbow
     model = sqlite_to_keyedvectors(SQLITE_PATH, MODEL_PATH)
 
-    # 2. Crea train, validation e test con un vettore per ogni testo
+    # Ogni file viene processato indipendentemente
     for split, input_path in INPUT_FILES.items():
         salva_embedding(split, input_path, model)
 
