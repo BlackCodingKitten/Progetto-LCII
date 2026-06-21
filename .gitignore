@@ -217,3 +217,8 @@ __marimo__/
 data/raw
 # Streamlit
 .streamlit/secrets.toml
+
+*.sqlite
+*.kv
+*.npy
+*.bin
