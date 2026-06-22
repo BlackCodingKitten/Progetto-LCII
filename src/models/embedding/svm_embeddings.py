@@ -1,15 +1,15 @@
 """
-REMINDER: 
- _____________________________________________________________________________________________________________
-| Rappresentazione | Tipo                          | Costruzione vettore del testo                            |
-|__________________|_______________________________|__________________________________________________________|
-| fastText         | statico, non contestualizzato | media degli embedding delle parole                       |
-| itWaC-cbow       | statico, non contestualizzato | media + deviazione standard degli embedding delle parole |
-| umBERTo          | contestualizzato              | mean pooling degli hidden states dei token               |
-| bge-m3           | contestualizzato              | embedding dense del testo prodotto dal modello           |
-|__________________|_______________________________|__________________________________________________________|
+REMINDER:
+ ________________________________________________________________________________________________________________
+| Rappresentazione       | Tipo                          | Costruzione vettore del testo                            |
+|________________________|_______________________________|__________________________________________________________|
+| fastText               | statico, non contestualizzato | media degli embedding delle parole                       |
+| itWaC-cbow             | statico, non contestualizzato | media + deviazione standard degli embedding delle parole |
+| w2v-zenodo             | statico, non contestualizzato | media pesata SIF degli embedding + rimozione prima PC    |
+| umBERTo                | contestualizzato              | mean pooling degli hidden states dei token               |
+| bge-m3                 | contestualizzato              | embedding dense del testo prodotto dal modello           |
+|________________________|_______________________________|__________________________________________________________|
 """
-
 
 from pathlib import Path
 import pandas as pd
@@ -38,6 +38,10 @@ RAPPRESENTAZIONI = {
         "train": "data/features/embedding/non_contestualizzato/itWaC-cbow/itWaC-cbow_train.csv",
         "validation": "data/features/embedding/non_contestualizzato/itWaC-cbow/itWaC-cbow_validation.csv",
     },
+    "w2v-zenodo": {
+        "train": "data/features/embedding/non_contestualizzato/w2vec/w2v_zenodo_sif_mean_train.csv",
+        "validation": "data/features/embedding/non_contestualizzato/w2vec/w2v_zenodo_sif_mean_validation.csv",
+    },
 }
 
 OUTPUT_PATH = Path("results/embedding/embedding_svm_validation_metrics.csv")
@@ -47,26 +51,26 @@ OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 # ===================== FUNZIONI =====================
 
 def carica_xy(path):
-    # Separa embedding e label
+    # Separa feature e label.
     df = pd.read_csv(path)
     return df.drop(columns="label"), df["label"]
 
 
 def valuta_rappresentazione(nome, paths):
-    # Carica train e validation della singola rappresentazione
+    # Carica train e validation della singola rappresentazione.
     X_train, y_train = carica_xy(paths["train"])
     X_val, y_val = carica_xy(paths["validation"])
 
-    # Crea una nuova SVM indipendente per questa rappresentazione
+    # Crea una SVM lineare indipendente per questa rappresentazione.
     svm = make_pipeline(
         StandardScaler(),
         SVC(kernel="linear")
     )
 
-    # Addestra solo sul train della rappresentazione corrente
+    # Addestra solo sul train.
     svm.fit(X_train, y_train)
 
-    # Valuta solo sul validation della stessa rappresentazione
+    # Valuta solo sul validation.
     y_pred = svm.predict(X_val)
     y_score = svm.decision_function(X_val)
 
@@ -81,7 +85,7 @@ def valuta_rappresentazione(nome, paths):
 # ===================== MAIN =====================
 
 def main():
-    # Una SVM separata per ogni tipo di rappresentazione
+    # Una SVM separata per ogni rappresentazione.
     risultati = [
         valuta_rappresentazione(nome, paths)
         for nome, paths in RAPPRESENTAZIONI.items()
